@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import mplhep as hep
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 import logging
 import warnings
 
@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 hep.style.use(hep.style.ATLAS)
 
 def load_config(path: str) -> dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process HiggsML data features.")

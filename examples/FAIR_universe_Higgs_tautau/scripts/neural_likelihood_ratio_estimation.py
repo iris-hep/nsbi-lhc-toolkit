@@ -5,7 +5,7 @@ import warnings
 import logging
 import numpy as np
 import uproot
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -14,8 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def load_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Neural Likelihood Ratio Estimation Trainer")

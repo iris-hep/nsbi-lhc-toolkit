@@ -4,7 +4,7 @@ import logging
 import warnings
 import matplotlib.pyplot as plt
 import mplhep as hep
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 import jax
 
 import nsbi_common_utils
@@ -33,8 +33,7 @@ def parse_args():
     return parser.parse_args()
 
 def load_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def save_nll_plot(scan_data, output_dir, parameter_label):
     """Plots the NLL scans and saves the figure."""

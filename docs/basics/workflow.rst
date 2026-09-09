@@ -88,7 +88,7 @@ That single command builds the full DAG (parameter_fitting at the leaf, all trai
 
 .. warning::
 
-   The provided ``profiles/chtc/`` profile, the ``Snakefile`` resource blocks, and the paths in ``config.pipeline.yaml`` are written for the `CHTC <https://chtc.cs.wisc.edu/>`_ pool at UW-Madison and a specific user account. **They will not run as-is on another system.** Before launching, you must edit them for your site — see *Adapting to your cluster* below for the exact files and fields to change.
+   The provided ``profiles/chtc/`` profile and the per-rule resource blocks are written for the `CHTC <https://chtc.cs.wisc.edu/>`_ pool at UW-Madison and a specific user account — container image, machine-exclude lists, pool ClassAds and the sentinel directory. **The profile will not run as-is on another system.** Before launching, edit it for your site — see *Adapting to your cluster* below for the exact files and fields to change. The configs themselves (``config.pipeline.yaml`` and the fit configs) are portable: their paths default to a repo-relative ``./saved_datasets`` and are repointed with the ``NSBI_DATA_DIR`` environment variable rather than by editing.
 
 Submitting and monitoring
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -214,6 +214,6 @@ The rule *logic* is portable, but the site-specific values are not. Before runni
 
 **3. The pipeline config —** ``config.pipeline.yaml`` and the fit configs (``config_fit_nsbi.yml``, ``config_fit_histogram.yml``):
 
-- All dataset and output paths use absolute ``/projects/Physics_Cranmer/...`` locations. Repoint every ``saved_data_path``, ``output.dir``, ``SamplePath``, ``Models``/``Ratios``, and ``AsimovWeights`` entry to your storage layout.
+- Every dataset and output path is written as ``${NSBI_DATA_DIR:-./saved_datasets}``, which resolves relative to the example directory when the variable is unset. Rather than editing the ``saved_data_path``, ``output.dir``, ``SamplePath``, ``Models``/``Ratios`` and ``AsimovWeights`` entries individually, export ``NSBI_DATA_DIR`` to point the whole pipeline at your storage. The CHTC profile does this per job in ``profiles/chtc/job_wrapper.sh``; set it the same way for your site, on a filesystem your execute nodes can see.
 
 For sites without a batch system at all, the local sequential commands (the scripts, or the notebooks) still work and can be wrapped in your site's job-submission idiom directly.

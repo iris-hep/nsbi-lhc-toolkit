@@ -2,8 +2,10 @@
 
 import json
 import logging
+import os
 import pathlib
 import pkgutil
+import re
 from typing import Any, Literal, Optional, Union
 
 import yaml
@@ -13,6 +15,70 @@ log = logging.getLogger(__name__)
 
 class ConfigError(Exception):
     """Raised for config load/validate/write errors."""
+
+
+# Matches ``${VAR}`` and ``${VAR:-default}`` inside config strings.
+_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+
+
+def expand_env_vars(obj: Any) -> Any:
+    """Recursively expand ``${VAR}`` / ``${VAR:-default}`` references in every string of a loaded config structure.
+
+    This is what keeps the committed configs portable. Paths are written once with a relative default (e.g. ``${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root``) so a fresh clone runs out of the box, while a cluster run overrides the location by exporting a single environment variable instead of editing every path in the file.
+
+    A ``${VAR}`` with no default that is not set in the environment raises :class:`ConfigError` rather than silently expanding to an empty string, so a typo surfaces as a clear error instead of a mangled path.
+
+    Args:
+        obj (Any): loaded config fragment - dicts, lists and strings are walked, everything else is returned unchanged.
+
+    Returns:
+        Any: the same structure with all environment references expanded.
+    """
+    if isinstance(obj, str):
+
+        def _substitute(match: re.Match) -> str:
+            var_name, default = match.group(1), match.group(2)
+            env_value = os.environ.get(var_name)
+            if env_value is not None:
+                return env_value
+            if default is not None:
+                return default
+            raise ConfigError(
+                f"Config references environment variable '{var_name}', which is not set and has no default. "
+                f"Either export {var_name} or write it as ${{{var_name}:-<default>}}."
+            )
+
+        return _ENV_VAR_PATTERN.sub(_substitute, obj)
+
+    if isinstance(obj, dict):
+        return {key: expand_env_vars(value) for key, value in obj.items()}
+
+    if isinstance(obj, list):
+        return [expand_env_vars(item) for item in obj]
+
+    return obj
+
+
+def load_pipeline_config(path: Union[str, pathlib.Path]) -> dict[str, Any]:
+    """Load a pipeline config (``config.pipeline.yaml``) and expand environment references in it.
+
+    Shared by the example scripts and notebooks so all three entry points (notebooks, scripts, Snakemake) resolve paths identically. For the fit configs (``config_fit_*.yml``) the same expansion happens inside :meth:`ConfigManager.load`.
+
+    Args:
+        path (Union[str, pathlib.Path]): path to the YAML pipeline config.
+
+    Returns:
+        dict[str, Any]: parsed config with ``${VAR}`` / ``${VAR:-default}`` references resolved.
+    """
+    try:
+        with open(path, "r") as config_file:
+            config = yaml.safe_load(config_file)
+    except OSError as e:
+        raise ConfigError(f"Could not read config file at {path}: {e}") from e
+    except yaml.YAMLError as e:
+        raise ConfigError(f"YAML parse error in {path}: {e}") from e
+
+    return expand_env_vars(config)
 
 class ConfigManager:
 
@@ -153,7 +219,7 @@ class ConfigManager:
             config = yaml.safe_load(file_path.read_text())
         except Exception as e:
             raise ConfigError(f"YAML parse error: {e}") from e
-        config = yaml.safe_load(file_path.read_text())
+        config = expand_env_vars(config)
         self.validate(config)
         return config
 

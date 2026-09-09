@@ -7,14 +7,13 @@ import uproot
 from HiggsML.datasets import download_dataset
 from HiggsML.systematics import systematics
 
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def load_config(path: str) -> dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 
 def parse_args() -> argparse.Namespace:

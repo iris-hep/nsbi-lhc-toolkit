@@ -6,7 +6,7 @@ import warnings
 import logging
 import numpy as np
 import uproot
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 import mplhep as hep
 import pickle
 
@@ -29,8 +29,7 @@ if not logger.handlers:
 hep.style.use(hep.style.ATLAS)
 
 def load_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Neural Likelihood Ratio Estimation Trainer")

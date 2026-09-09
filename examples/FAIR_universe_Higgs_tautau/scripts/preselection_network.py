@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import uproot
 import warnings
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 import matplotlib.pyplot as plt
 import mplhep as hep
 from sklearn.model_selection import train_test_split
@@ -25,8 +25,7 @@ sys.path.append('../src')
 import nsbi_common_utils
 
 def load_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Preselection Neural Network Training & Inference")
