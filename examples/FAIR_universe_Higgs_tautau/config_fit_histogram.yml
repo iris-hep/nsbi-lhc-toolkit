@@ -116,7 +116,7 @@ Systematics:
 
 Regions:
 -   Name: CR
-    Filter: presel_score<-1.0
+    Filter: presel_score<1.0
     Variable: presel_score
     Type: binned
     Binning:
@@ -124,22 +124,20 @@ Regions:
         - -4.
         - -2.5
         - -1.0
+        - 0.0
+        - 1.0
 -   Name: SR_binned
     Filter: presel_score>4.5
     Variable: presel_score
     Type: binned
     Binning:
         - 4.5
-        - 5.
+        - 7.
 -   Name: SR
-    Filter: presel_score>=-1.0 & presel_score<=4.5
+    Filter: presel_score>=1.0 & presel_score<=4.5
     Variable: presel_score
     Type: binned
     Binning:
-        - -1.0
-        - -0.5
-        - 0.0
-        - 0.5
         - 1.0
         - 1.25
         - 1.5

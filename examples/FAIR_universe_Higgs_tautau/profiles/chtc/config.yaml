@@ -60,13 +60,13 @@ set-resources:
     requirements: '(Target.HasCHTCStaging == true) && (Machine != "vetsigian0001.chtc.wisc.edu") && (Machine != "vetsigian0000.chtc.wisc.edu") && (Machine != "gpulab2003.chtc.wisc.edu")'
 
   data_preprocessing:
-    request_memory: "64GB"
+    request_memory: "80GB"
     request_disk:   "64GB"
     request_gpus:   1
     requirements: '(Target.HasCHTCStaging == true) && (Machine != "vetsigian0001.chtc.wisc.edu") && (Machine != "vetsigian0000.chtc.wisc.edu") && (Machine != "gpulab2003.chtc.wisc.edu")'
 
   preselection_network:
-    request_memory:          "64GB"
+    request_memory:          "80GB"
     request_disk:            "64GB"
     request_gpus:            1
     gpus_minimum_capability: "7.0"
@@ -95,7 +95,7 @@ set-resources:
     classad_WantGPULab:      1
     classad_GPUJobLength:    "medium"
     requirements: '(GPUs_DriverVersion >= 12.4) && (Target.HasCHTCStaging == true) && (Machine != "vetsigian0001.chtc.wisc.edu") && (Machine != "vetsigian0000.chtc.wisc.edu") && (Machine != "gpulab2003.chtc.wisc.edu") && (Machine != "gpulab2001.chtc.wisc.edu") && (Machine != "dsigpu4001.chtc.wisc.edu")'
-    allowed_job_duration:    9000
+    allowed_job_duration:    36000
     max_retries:             3
 
   systematic_uncertainty_training_fold:
@@ -106,7 +106,7 @@ set-resources:
     classad_WantGPULab:      1
     classad_GPUJobLength:    "medium"
     requirements: '(GPUs_DriverVersion >= 12.4) && (Target.HasCHTCStaging == true) && (Machine != "vetsigian0001.chtc.wisc.edu") && (Machine != "vetsigian0000.chtc.wisc.edu") && (Machine != "gpulab2003.chtc.wisc.edu") && (Machine != "gpulab2001.chtc.wisc.edu")'
-    allowed_job_duration:    9000
+    allowed_job_duration:    36000
     max_retries:             3
 
   systematic_uncertainty_training_nofold:
@@ -117,7 +117,7 @@ set-resources:
     classad_WantGPULab:      1
     classad_GPUJobLength:    "medium"
     requirements: '(GPUs_DriverVersion >= 12.4) && (Target.HasCHTCStaging == true) && (Machine != "vetsigian0001.chtc.wisc.edu") && (Machine != "vetsigian0000.chtc.wisc.edu") && (Machine != "gpulab2003.chtc.wisc.edu") && (Machine != "gpulab2001.chtc.wisc.edu")'
-    allowed_job_duration:    9000
+    allowed_job_duration:    36000
     max_retries:             3
 
   data_nn_eval:

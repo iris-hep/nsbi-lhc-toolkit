@@ -13,14 +13,20 @@
 data_loader:
   data:
     url: "https://zenodo.org/records/15131565/files/FAIR_Universe_HiggsML_data.zip"
-    train_size: 0.5
     processes:
       - htautau
       - ztautau
       - ttbar
+    fractions:
+      htautau: 0.2
+      ztautau: 0.3
+      ttbar:   1.0
+    chunk_rows: 2000000       # source rows streamed per chunk; peak memory is a few copies of one chunk
+    test_size: 0.3            # first fraction of rows reserved as the challenge's test set (HiggsML default); never used for training
 
   preprocess:
     seed: 42
+    balance: false              # true: downsample every process to the smallest one; false: keep all events
     selections: >
       DER_mass_transverse_met_lep <= 250.0 and
       DER_mass_vis <= 500.0 and
@@ -82,7 +88,7 @@ preselection_network:
   
   model_path: "${NSBI_DATA_DIR:-./saved_datasets}/preselection_model/"
   force_train: false
-  load_trained_models: false
+  load_trained_models: true
 
   training:
     test_size: 0.2
@@ -130,16 +136,19 @@ neural_likelihood_ratio_estimation:
   #   (b) <positive number> -> use as the relative prior weight directly (any unit; only ratios matter)
   #   (c) {cap: M}     -> auto-solve the prior so this sample's per-event density ratio is bounded at M
   #   (d) 0  (or false) -> exclude this sample from the reference (handy for toggling without deleting the line)
+  # Equal thirds: only ratios matter, so 1/1/1 gives each sample 1/3 of the class-0
+  # weight. Every basis process is now covered by the reference, which bounds each
+  # per-event ratio at 3 instead of letting it diverge where the reference has no support.
   reference_priors:
-    htautau: null       
-    ttbar:   null        
-    ztautau: 0    
+    htautau: 1
+    ttbar:   1
+    ztautau: 1
 
   # Some default hyper-parameters - quality tested for SBI
   common_training_params: &common_params
-    hidden_layers: 4
+    hidden_layers: 5
     neurons: 1000
-    number_of_epochs: 100
+    number_of_epochs: 200
     batch_size: 1024
     learning_rate: 0.0001
     scalerType: "MinMax"
@@ -148,10 +157,10 @@ neural_likelihood_ratio_estimation:
     recalibrate_output: false
     type_of_calibration: "histogram"
     num_bins_cal: null
-    
+
     callback: true
-    callback_patience: 30
-    callback_factor: 0.01
+    callback_patience: 15
+    callback_factor: 0.1
 
     validation_split: 0.1
     holdout_split: 0.25
@@ -183,11 +192,11 @@ systematic_uncertainty:
   saved_data_path: "${NSBI_DATA_DIR:-./saved_datasets}/"
   output_training_dir: "output_training_systematics"
   filter_region: "SR"
-  force_train: true
+  force_train: false
 
   use_log_loss: false
-  num_ensemble_members_training: 40
-  num_ensemble_members_evaluation: 40
+  num_ensemble_members_training: 1
+  num_ensemble_members_evaluation: 1
   # Was "median_score" before the score -> ratio migration. Score-space aggregation
   # no longer exists; "median" is the faithful equivalent, since r = s/(1-s) is
   # strictly monotonic and the median is an order statistic.
@@ -215,7 +224,7 @@ systematic_uncertainty:
 
     verbose: 0
     plot_scaled_features: false
-    load_trained_models: false
+    load_trained_models: true
     use_best_checkpoint_model: true
 
     num_workers: 0
