@@ -234,8 +234,8 @@ def plot_reweighted(
         data_num = dataset[dataset.train_labels==1].copy()
         data_num['ratio'] = ratio_num
 
-        weight_den_arr = np.ravel(data_den.weights)
-        weight_num_arr = np.ravel(data_num.weights)
+        weight_den_arr = np.ravel(weight_den)
+        weight_num_arr = np.ravel(weight_num)
 
         ratio_den_arr = np.ravel(data_den.ratio)
         den_to_num_rwt = weight_den_arr * ratio_den_arr

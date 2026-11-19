@@ -258,9 +258,37 @@ class datasets:
         for file_path, trees_dict in file_to_trees.items():
             self._write_file_with_trees(file_path, trees_dict)
 
+    @staticmethod
+    def _tree_columns(data, start: int, stop: int) -> Dict[str, object]:
+        """Rows [start, stop) of a DataFrame or awkward record array as a dict of branch arrays: numeric columns as numpy, string columns as awkward string arrays (the DataFrame index is not written)."""
+        if isinstance(data, pd.DataFrame):
+            piece = data.iloc[start:stop]
+            columns = {}
+            for name in piece.columns:
+                series = piece[name]
+                if series.dtype == object or str(series.dtype) in ("string", "category"):
+                    columns[name] = ak.Array(series.astype(str).tolist())
+                else:
+                    columns[name] = series.to_numpy()
+            return columns
+        piece = data[start:stop]
+        columns = {}
+        for name in ak.fields(piece):
+            arr = piece[name]
+            # to_packed: a sliced string array is a view whose offsets do not start at zero, which uproot writes as a corrupt basket
+            columns[name] = ak.to_packed(arr) if "string" in str(ak.type(arr)) else ak.to_numpy(arr)
+        return columns
+
+    @staticmethod
+    def _branch_type(arr):
+        """mktree branch type for one column array: 'string' for awkward string arrays, the numpy dtype otherwise."""
+        if isinstance(arr, ak.Array):
+            return "string"
+        return np.asarray(arr).dtype
+
     def _write_file_with_trees(
-        self, 
-        file_path: str, 
+        self,
+        file_path: str,
         new_trees_dict: Dict[str, pd.DataFrame]
     ) -> None:
         """
@@ -292,10 +320,17 @@ class datasets:
         # 2. Add the new/updated trees
         trees_to_write.update(new_trees_dict)
 
-        # 3. Write everything to a temp file, then atomically replace
+        write_chunk_rows = 2_000_000
         with uproot.recreate(tmp_path) as fout:
             for tree_name, data in trees_to_write.items():
-                fout[tree_name] = data
+                n_rows = len(data)
+                first = self._tree_columns(data, 0, min(write_chunk_rows, n_rows))
+                fout.mktree(tree_name, {name: self._branch_type(arr) for name, arr in first.items()})
+                if n_rows == 0:
+                    continue
+                fout[tree_name].extend(first)
+                for start in range(write_chunk_rows, n_rows, write_chunk_rows):
+                    fout[tree_name].extend(self._tree_columns(data, start, min(start + write_chunk_rows, n_rows)))
 
         os.replace(tmp_path, file_path)
         print(f"Saved {len(new_trees_dict)} tree(s) to {file_path}: {list(new_trees_dict.keys())}")

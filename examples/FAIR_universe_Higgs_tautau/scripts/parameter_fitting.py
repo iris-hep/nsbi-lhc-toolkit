@@ -60,9 +60,7 @@ def save_nll_plot(scan_data, output_dir, parameter_label):
     
     plt.axhline(1, color='gray', linestyle=':', alpha=0.5)
     plt.axhline(4, color='gray', linestyle=':', alpha=0.5)
-    
-    hep.atlas.label(data=False, label="Internal", loc=0)
-    
+
     output_path = os.path.join(output_dir, "nll_scan_comparison.png")
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()

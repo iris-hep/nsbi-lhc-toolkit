@@ -1,25 +1,20 @@
 #!/bin/bash
 
-# Fail early if there's an issue
 set -e
 
-# When .cache files are created, they need to know where HOME is to write there.
-# In this case, that should be the HTCondor scratch dir the job is executing in.
 export HOME=$(pwd)
 
-# Site-specific data location. The committed configs write every dataset/model
-# path as `${NSBI_DATA_DIR:-./saved_datasets}/...`, so a fresh clone runs against
-# a repo-relative directory with no edits, and this one export is what repoints
-# the exact same files at CHTC's shared /projects filesystem (which the profile's
-# `htcondor-shared-fs-prefixes` lets the EP read and write directly).
+# Site-specific data location.
 export NSBI_DATA_DIR=/projects/Physics_Cranmer/saved_datasets
 
-# EP-side bootstrap (was repeated in every rule's shell block in the Snakefile).
+STAGED_DATA_ZIP=/projects/Physics_Cranmer/sbi_studies/FAIR_Universe_HiggsML_data.zip
+if [ -f "$STAGED_DATA_ZIP" ]; then
+    ln -sf "$STAGED_DATA_ZIP" examples/FAIR_universe_Higgs_tautau/data.zip
+fi
+
 # The container ships snakemake + deps via pixi; here we (re)install the package
-# from the transferred `src/` so the EP runs the current source. hatch-vcs can't
-# read a git tag on the EP (no .git transferred), so pin a placeholder version.
+# from the transferred `src/` so the EP runs the current source. 
 export SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
 python -m pip install --no-deps --user -e .
 
-# Pass any arguments to Snakemake
 exec snakemake "$@"
