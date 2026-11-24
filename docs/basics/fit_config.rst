@@ -43,11 +43,24 @@ Each row in ``Samples`` is a physics process read from a ROOT file:
    Samples:
      - Name: htautau
        Tree: tree_htautau
-       SamplePath: ./saved_datasets/dataset_nominal.root
+       SamplePath: <path/to>/dataset_nominal.root
        Weight: weights
        UseAsBasis: True
 
 - **UseAsBasis** — this process gets its own density-ratio network. This tells the workflow, that the sample forms one of the basis of the parametric morphing formula used in the statistical model.
+
+The observed dataset is one more entry in ``Samples``, flagged with ``Data: True``:
+
+.. code-block:: yaml
+
+   Samples:
+     - Name: obs
+       Tree: tree_obs
+       SamplePath: <path/to>/dataset_with_obs.root
+       Data: True
+
+- **Data: True** — this sample is the observation. In binned regions its histogram is the observed data, in unbinned regions its events are the ones the density ratios are evaluated on. Only one sample can be flagged as data. ``Weight`` is optional and defaults to one per event.
+- If no sample is flagged, the expected (Asimov) dataset built from the MC samples is used as the observation.
 
 Which samples form the reference :math:`p_{\text{ref}}` for the density ratio :math:`r(x) = p / p_{\text{ref}}` is configured at the workflow level (``config.pipeline.yaml`` in the example, under ``neural_likelihood_ratio_estimation.reference_priors``) and consumed by :meth:`nsbi_common_utils.datasets.datasets.prepare_basis_training_dataset`. See that method's docstring for the full spec (auto-yield, numeric, ``{cap: M}``, exclude). The previous ``UseAsReference: True/False`` field on each sample is deprecated.
 
@@ -80,12 +93,12 @@ Shape + normalization uncertainties point to the up/down varied ROOT files:
        Samples: [htautau, ztautau, ttbar]
        Up:
          - SampleName: htautau
-           Path: ./saved_datasets/dataset_JES_up.root
+           Path: <path/to>/dataset_JES_up.root
            Tree: tree_htautau
            Weight: weights
        Dn:
          - SampleName: htautau
-           Path: ./saved_datasets/dataset_JES_dn.root
+           Path: <path/to>/dataset_JES_dn.root
            Tree: tree_htautau
            Weight: weights
 
@@ -109,20 +122,57 @@ Regions define event selections and whether the channel is binned or unbinned:
 
      # Unbinned SBI signal region
      - Name: SR
-       Filter: presel_score >= -1.0 & presel_score <= 4.5
+       Filter: presel_score >= 1.0 & presel_score <= 4.5
        Type: unbinned
-       AsimovWeights: ./saved_datasets/asimov_weights.npy
-       TrainedModels:
-         - SampleName: htautau
+
+For **binned** regions, the workspace builder histograms every sample using ``Variable`` and ``Binning``.
+For **unbinned** regions, the density-ratio models are listed separately under ``TrainedModels``.
+
+Trained models
+--------------
+
+``TrainedModels`` links each unbinned region to its density-ratio networks and the per-event ratios they produce:
+
+.. code-block:: yaml
+
+   TrainedModels:
+     - RegionName: SR
+       Weights: <path/to>/weights.npy
+       Models:
+         - Name: htautau
            Nominal:
-             Ratios: ./saved_datasets/.../ratio_htautau.npy
+             Models: <path/to>/models_htautau/
+             Ratios: <path/to>/ratio_htautau.npy
            Systematics:
              - SystName: JES
-               RatiosUp: ./saved_datasets/.../ratio_htautau.npy
-               RatiosDn: ./saved_datasets/.../ratio_htautau.npy
+               ModelsUp: <path/to>/models_htautau_JES_Up/
+               ModelsDn: <path/to>/models_htautau_JES_Dn/
+               RatiosUp: <path/to>/ratio_htautau_JES_Up.npy
+               RatiosDn: <path/to>/ratio_htautau_JES_Dn.npy
 
-For **unbinned** regions, ``TrainedModels`` points to the pre-evaluated density-ratio ``.npy`` arrays produced by the evaluation pipeline step.
-For **binned** regions, the workspace builder histograms the data automatically using ``Variable`` and ``Binning``.
+- **RegionName** — name assigned to the unbinned region.
+- **Weights** — per-event weights of the observed (or Asimov) events in the region.
+- **Models** / **ModelsUp** / **ModelsDn** — directories the trained networks are written to and loaded from.
+- **Ratios** / **RatiosUp** / **RatiosDn** — per-event density ratios ``p_c(x) / p_ref(x)`` evaluated on the observed events, one ``.npy`` array of shape ``(n_events,)`` per sample and variation.
+
+Observed data
+-------------
+
+The workspace carries an ``observations`` entry per region, built from the ``Data: True`` sample (or the Asimov expectation):
+
+.. code-block:: python
+
+   "observations": [
+       {"name": "CR", "data": [n_1, ..., n_k]},
+       {"name": "SR",
+        "data": [N_obs],
+        "weights": "<path/to>/weights.npy",
+        "ratios": {"htautau": "<path/to>/ratio_htautau.npy",
+                   "ttbar":   "<path/to>/ratio_ttbar.npy",
+                   "ztautau": "<path/to>/ratio_ztautau.npy"}},
+   ]
+
+Binned regions hold the observed histogram. Unbinned regions hold the total observed yield together with the ``Weights`` and nominal ``Ratios`` paths from ``TrainedModels``.
 
 Training features
 -----------------

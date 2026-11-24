@@ -6,11 +6,11 @@ The ``examples/model_building_example/`` directory provides a **standalone** wal
 Prerequisites
 -------------
 
-You need four ingredients, all of which are included in the example directory (via symlinks to the main dataset):
+You need four ingredients, all produced by the ``FAIR_universe_Higgs_tautau`` pipeline (or contained in its downloadable bundle):
 
 1. A **fit configuration** YAML file (``config_fit_nsbi.yml`` or ``config_fit_histogram.yml``).
 2. **Pre-computed density-ratio** ``.npy`` files (nominal + systematic variations) — produced by the training pipeline or any external source.
-3. **Asimov weights** (or real-data weights) for the unbinned region.
+3. **Observed data**: a ROOT tree flagged ``Data: True`` in the config, plus the per-event weights of its events in the unbinned region. The example uses the Asimov dataset as its observation.
 4. **ROOT files** containing the MC samples used by binned channels.
 
 Directory layout
@@ -23,8 +23,14 @@ Directory layout
      config_fit_nsbi.yml               # Combined binned + unbinned (NSBI) fit
      1_workspace_building.ipynb        # Notebook: build workspaces from config
      2_parameter_fitting.ipynb         # Notebook: fit and profile scan
-     saved_datasets/
+
+All data paths in the configs are written as ``${NSBI_DATA_DIR:-./saved_datasets}``. Set ``NSBI_DATA_DIR`` to the same data directory the FAIR example uses:
+
+.. code-block:: text
+
+   saved_datasets/
        asimov_weights.npy              # Per-event weights (unbinned region)
+       dataset_with_obs.root           # Observed data (here: the Asimov dataset)
        dataset_nominal.root            # Nominal MC (binned channels)
        dataset_JES_up.root             # Systematic variation ROOT files
        dataset_JES_dn.root
@@ -133,32 +139,33 @@ See :doc:`/api/inference` for the full API.
 Fit configuration
 -----------------
 
-The YAML config defines five sections consumed by the workspace builder. See :doc:`fit_config` for the full specification; the key points are summarised here.
+The YAML config defines six sections consumed by the workspace builder. See :doc:`fit_config` for the full specification; the key points are summarised here.
 
 **Measurement** — which parameters to fit and the parameter of interest (POI).
 
-**Samples** — physics processes (signal, backgrounds) with paths to ROOT files and tree names.
+**Samples** — physics processes (signal, backgrounds) with paths to ROOT files and tree names, plus the observed dataset flagged ``Data: True``.
 
 **NormFactors** — free normalisation parameters (one per sample or shared).
 
 **Systematics** — nuisance parameters with paths to up/down ROOT variation files. Currently only ``NormPlusShape`` is supported.
 
-**Regions** — analysis regions tagged as ``binned`` (control/signal regions built from histograms) or ``unbinned`` (signal region using density ratios). Unbinned regions reference the trained model outputs:
+**Regions** — analysis regions tagged as ``binned`` (control/signal regions built from histograms) or ``unbinned`` (signal region using density ratios).
+
+**TrainedModels** — the density-ratio outputs for each unbinned region:
 
 .. code-block:: yaml
 
-   Regions:
-   - Name: SR
-     Type: unbinned
-     AsimovWeights: ./saved_datasets/asimov_weights.npy
-     TrainedModels:
-       - SampleName: htautau
+   TrainedModels:
+   - RegionName: SR
+     Weights: <path/to>/weights.npy
+     Models:
+       - Name: htautau
          Nominal:
-           Ratios: ./saved_datasets/output_training_nominal/output_ratios_htautau/ratio_htautau.npy
+           Ratios: <path/to>/ratio_htautau.npy
          Systematics:
            - SystName: JES
-             RatiosUp: .../output_ratios_htautau_JES_Up/ratio_htautau.npy
-             RatiosDn: .../output_ratios_htautau_JES_Dn/ratio_htautau.npy
+             RatiosUp: <path/to>/ratio_htautau_JES_Up.npy
+             RatiosDn: <path/to>/ratio_htautau_JES_Dn.npy
 
 Notebooks
 ---------

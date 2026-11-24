@@ -241,7 +241,7 @@ class WorkspaceBuilder:
         Returns
         -------
         list of dict
-            Each dict represents one channel with keys ``"name"``, ``"type"`` (``"binned"``/``"unbinned"``), ``"samples"``, and optionally ``"weights"`` (path to Asimov weight file for unbinned channels).
+            Each dict represents one channel with keys ``"name"``, ``"type"`` (``"binned"``/``"unbinned"``) and ``"samples"``. The sample flagged ``Data: True`` is not part of the model and is handled by :meth:`observations`.
         """
         channels = []
 
@@ -333,15 +333,20 @@ class WorkspaceBuilder:
 
         return channels
 
-    def observations(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Build the ``"channels"`` list for the workspace.
+    def observations(self) -> List[Dict[str, Any]]:
+        """Build the ``"observations"`` list for the workspace.
 
-        For every region in the configuration, loads datasets from ROOT files, computes nominal histograms, attaches density-ratio file paths (for unbinned regions), and collects all applicable normfactor and systematic modifiers per sample.
+        For every region in the configuration, histograms the observed sample (the one flagged ``Data: True``) with the region's ``Variable`` and ``Binning``. When no sample is flagged, the Asimov expectation, i.e. the sum of all MC samples' nominal histograms, is used instead. For unbinned regions the entry also carries the paths to the per-event weights and nominal density ratios listed under ``TrainedModels``.
 
         Returns
         -------
         list of dict
-            Each dict represents one channel with keys ``"name"``, ``"type"`` (``"binned"``/``"unbinned"``), ``"samples"``, and optionally ``"weights"`` (path to Asimov weight file for unbinned channels).
+            One dict per region, in the same order as :meth:`channels`, with keys ``"name"`` and ``"data"`` (observed bin contents; a single total yield for unbinned regions). Unbinned entries additionally have ``"weights"`` (path to the event-weight file) and ``"ratios"`` (dict of sample name to nominal ratio file).
+
+        Raises
+        ------
+        NotImplementedError
+            If more than one sample is flagged ``Data: True``.
         """
         observations = []
 
@@ -491,12 +496,12 @@ class WorkspaceBuilder:
     def build(self) -> Dict[str, Any]:
         """Construct the full workspace dictionary.
 
-        Calls :meth:`channels` and :meth:`measurements` and combines them with a version tag into the top-level workspace dict.
+        Calls :meth:`channels`, :meth:`observations` and :meth:`measurements` and combines them with a version tag into the top-level workspace dict.
 
         Returns
         -------
         dict
-            Workspace with keys ``"channels"``, ``"measurements"``, and ``"version"``.  Ready to be passed to :class:`~nsbi_common_utils.models.sbi_parametric_model` or serialised via :meth:`dump_workspace`.
+            Workspace with keys ``"channels"``, ``"observations"``, ``"measurements"``, and ``"version"``.  Ready to be passed to :class:`~nsbi_common_utils.models.sbi_parametric_model` or serialised via :meth:`dump_workspace`.
         """
         ws: Dict[str, Any] = {}  # the workspace
 

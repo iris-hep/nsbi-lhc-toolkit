@@ -1,35 +1,40 @@
 General:
-      Measurement    : 
-              Name : higgs_tautau_signal_strength
-              ParametersToFit  : 
-                              - mu_htautau
-                              - mu_ztautau
-                              - mu_ttbar
-                              - TES
-                              - JES
-              POI  : mu_htautau
+  Measurement:
+    Name: higgs_tautau_signal_strength
+    ParametersToFit:
+      - mu_htautau
+      - mu_ztautau
+      - mu_ttbar
+      - TES
+      - JES
+    POI: mu_htautau
 
 Samples:
-    - Name              : htautau
-      Tree              : tree_htautau
-      SamplePath        : ./saved_datasets/dataset_nominal.root
-      Weight            : weights
-      UseAsReference    : True
-      UseAsBasis        : True
+  # Observed dataset, written by 1_workspace_building.ipynb as the Asimov dataset
+  # (see config_fit_nsbi.yml).
+  - Name: obs
+    Tree: tree_obs
+    SamplePath: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_with_obs.root
+    Weight: weights
+    Data: True
 
-    - Name              : ttbar
-      Tree              : tree_ttbar
-      SamplePath        : ./saved_datasets/dataset_nominal.root
-      Weight            : weights
-      UseAsReference    : True
-      UseAsBasis        : True
-        
-    - Name : ztautau
-      Tree              : tree_ztautau
-      SamplePath        : ./saved_datasets/dataset_nominal.root
-      Weight            : weights
-      UseAsReference    : False
-      UseAsBasis        : True
+  - Name: htautau
+    Tree: tree_htautau
+    SamplePath: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
+    Weight: weights
+    UseAsBasis: True
+
+  - Name: ttbar
+    Tree: tree_ttbar
+    SamplePath: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
+    Weight: weights
+    UseAsBasis: True
+
+  - Name: ztautau
+    Tree: tree_ztautau
+    SamplePath: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
+    Weight: weights
+    UseAsBasis: True
 
 NormFactors:
   - Name: "mu_htautau"
@@ -44,111 +49,108 @@ NormFactors:
     Samples: "ttbar"
     Nominal: 1
     Bounds: [0, 10]
-    
-Systematics:
-    -   Name                : JES
-        Type                : NormPlusShape
-        Nominal             : 0
-        Samples             : 
-              - htautau
-              - ztautau
-              - ttbar
-        Up                  : 
-            -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_JES_up.root
-                Tree              : tree_htautau
-                Weight            : weights
-            -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_JES_up.root
-                Tree              : tree_ztautau
-                Weight            : weights
-            -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_JES_up.root
-                Tree              : tree_ttbar
-                Weight            : weights
-        Dn                  :
-            -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_JES_dn.root
-                Tree              : tree_htautau
-                Weight            : weights
-            -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_JES_dn.root
-                Tree              : tree_ztautau
-                Weight            : weights
-            -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_JES_dn.root
-                Tree              : tree_ttbar
-                Weight            : weights
-    -   Name                : TES
-        Type                : NormPlusShape
-        Nominal             : 0
-        Samples             : 
-              - htautau
-              - ztautau
-              - ttbar
-        Up                  :
-            -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_TES_up.root
-                Tree              : tree_htautau
-                Weight            : weights
-            -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_TES_up.root
-                Tree              : tree_ztautau
-                Weight            : weights
-            -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_TES_up.root
-                Tree              : tree_ttbar
-                Weight            : weights
-        Dn                  :
-            -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_TES_dn.root
-                Tree              : tree_htautau
-                Weight            : weights
-            -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_TES_dn.root
-                Tree              : tree_ztautau
-                Weight            : weights
-            -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_TES_dn.root
-                Tree              : tree_ttbar
-                Weight            : weights
 
+Systematics:
+  - Name: JES
+    Type: NormPlusShape
+    Nominal: 0
+    Samples:
+      - htautau
+      - ztautau
+      - ttbar
+    Up:
+      - SampleName: htautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
+        Tree: tree_htautau
+        Weight: weights
+      - SampleName: ztautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
+        Tree: tree_ztautau
+        Weight: weights
+      - SampleName: ttbar
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
+        Tree: tree_ttbar
+        Weight: weights
+    Dn:
+      - SampleName: htautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
+        Tree: tree_htautau
+        Weight: weights
+      - SampleName: ztautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
+        Tree: tree_ztautau
+        Weight: weights
+      - SampleName: ttbar
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
+        Tree: tree_ttbar
+        Weight: weights
+  - Name: TES
+    Type: NormPlusShape
+    Nominal: 0
+    Samples:
+      - htautau
+      - ztautau
+      - ttbar
+    Up:
+      - SampleName: htautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
+        Tree: tree_htautau
+        Weight: weights
+      - SampleName: ztautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
+        Tree: tree_ztautau
+        Weight: weights
+      - SampleName: ttbar
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
+        Tree: tree_ttbar
+        Weight: weights
+    Dn:
+      - SampleName: htautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
+        Tree: tree_htautau
+        Weight: weights
+      - SampleName: ztautau
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
+        Tree: tree_ztautau
+        Weight: weights
+      - SampleName: ttbar
+        Path: ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
+        Tree: tree_ttbar
+        Weight: weights
 
 Regions:
--   Name: CR
-    Filter: presel_score<-1.0
+  - Name: CR
+    Filter: presel_score<1.0
     Variable: presel_score
     Type: binned
     Binning:
-        - -8.75
-        - -4.
-        - -2.5
-        - -1.0
--   Name: SR_binned
+      - -8.75
+      - -4.
+      - -2.5
+      - -1.0
+      - 0.0
+      - 1.0
+  - Name: SR_binned
     Filter: presel_score>4.5
     Variable: presel_score
     Type: binned
     Binning:
-        - 4.5
-        - 5.
--   Name: SR
-    Filter: presel_score>=-1.0 & presel_score<=3.75
+      - 4.5
+      - 7.
+  - Name: SR
+    Filter: presel_score>=1.0 & presel_score<=4.5
     Variable: presel_score
     Type: binned
     Binning:
-        - -1.0
-        - -0.5
-        - 0.0
-        - 0.5
-        - 1.0
-        - 1.25
-        - 1.5
-        - 1.75
-        - 2.0
-        - 2.25
-        - 2.5
-        - 2.75
-        - 3.0
-        - 3.25
-        - 3.5
-        - 4.5
+      - 1.0
+      - 1.25
+      - 1.5
+      - 1.75
+      - 2.0
+      - 2.25
+      - 2.5
+      - 2.75
+      - 3.0
+      - 3.25
+      - 3.5
+      - 4.5

@@ -214,6 +214,6 @@ The rule *logic* is portable, but the site-specific values are not. Before runni
 
 **3. The pipeline config —** ``config.pipeline.yaml`` and the fit configs (``config_fit_nsbi.yml``, ``config_fit_histogram.yml``):
 
-- Every dataset and output path is written as ``${NSBI_DATA_DIR:-./saved_datasets}``, which resolves relative to the example directory when the variable is unset. Rather than editing the ``saved_data_path``, ``output.dir``, ``SamplePath``, ``Models``/``Ratios`` and ``AsimovWeights`` entries individually, export ``NSBI_DATA_DIR`` to point the whole pipeline at your storage. The CHTC profile does this per job in ``profiles/chtc/job_wrapper.sh``; set it the same way for your site, on a filesystem your execute nodes can see.
+- Every dataset and output path is written as ``${NSBI_DATA_DIR:-./saved_datasets}``, which resolves relative to the example directory when the variable is unset. Rather than editing the ``saved_data_path``, ``output.dir``, ``SamplePath``, ``Models``/``Ratios`` and ``Weights`` entries individually, export ``NSBI_DATA_DIR`` to point the whole pipeline at your storage. The CHTC profile does this per job in ``profiles/chtc/job_wrapper.sh``; set it the same way for your site, on a filesystem your execute nodes can see.
 
 For sites without a batch system at all, the local sequential commands (the scripts, or the notebooks) still work and can be wrapped in your site's job-submission idiom directly.
