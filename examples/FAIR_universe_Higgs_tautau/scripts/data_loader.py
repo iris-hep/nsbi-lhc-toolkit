@@ -96,14 +96,18 @@ def select_events(pf: pq.ParquetFile, fractions: dict, seed: int, n_test: int = 
 
 
 def iter_chunks(pf: pq.ParquetFile, chunk_rows: int, masks: dict):
-    """Yield (source rows read, pandas frame of kept rows) for consecutive runs of whole row groups of at least ``chunk_rows`` source rows (except the last). Row groups whose mask keeps nothing (in particular those lying entirely inside the reserved test region) are counted but not read."""
-    tables, n = [], 0
+    """Yield (source rows read, pandas frame of kept rows) for consecutive runs of whole row groups of at least ``chunk_rows`` source rows (except the last). Row groups whose mask keeps nothing (in particular those lying entirely inside the reserved test region) are counted but not read. Every kept row carries its global row index in the source file as ``event_id``, which is what identifies the same event across the nominal and systematic-variation trees (k-fold assignment keys on it)."""
+    tables, n, offset = [], 0, 0
     for rg in range(pf.num_row_groups):
+        n_rg = len(masks[rg])
         if not masks[rg].any():
-            n += len(masks[rg])
+            n += n_rg
+            offset += n_rg
             continue
         tbl = pf.read_row_group(rg)
         n += tbl.num_rows
+        tbl = tbl.append_column("event_id", pa.array(np.arange(offset, offset + n_rg, dtype=np.int64)))
+        offset += n_rg
         tables.append(tbl.filter(pa.array(masks[rg])))
         if n >= chunk_rows:
             yield n, pa.concat_tables(tables).to_pandas()

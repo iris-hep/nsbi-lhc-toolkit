@@ -233,110 +233,122 @@ class WorkspaceBuilder:
         return modifiers
         
 
-    def channels(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def _region_payload(self, region: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Load the datasets of one region once and build both its workspace channel and its observation.
+
+        Parameters
+        ----------
+        region : dict
+            One entry of the ``Regions`` list of the configuration.
+
+        Returns
+        -------
+        (dict, dict)
+            The channel (``"name"``, ``"type"``, ``"samples"``) and the observation (``"name"``, ``"data"``, plus ``"weights"`` and ``"ratios"`` for unbinned regions).
+
+        Raises
+        ------
+        NotImplementedError
+            If more than one sample is flagged ``Data: True``.
+        """
+        channel_name = region["Name"]
+        channel_type = region["Type"]
+        type_of_fit  = channel_type
+
+        region_binning  = region.get("Binning", None)
+        region_variable = region.get("Variable", None)
+        region_filters  = region["Filter"]
+
+        # Extract variable names used in the Filter expression so the dataset loader reads the columns needed for df.query()
+        filter_variables = [tok for tok in re.split(r'[<>=!&|()\s]+', region_filters)
+                            if tok and not tok.replace('.','',1).lstrip('-').isdigit()]
+
+        if region_variable is None:
+            # For unbinned regions with no explicit Variable, use the first filter variable for the dummy single-bin yield histogram
+            region_variable = filter_variables[0]
+            region["Variable"] = region_variable
+
+        branches_to_load = [region_variable]
+        for v in filter_variables:
+            if v not in branches_to_load:
+                branches_to_load.append(v)
+
+        datasets            = nsbi_common_utils.datasets.datasets(self.config_path,
+                                                                  branches_to_load = branches_to_load.copy())
+        datasets_incl       = datasets.load_datasets_from_config(load_systematics = True)
+        dataset_region_dict = datasets.filter_region_by_type(datasets_incl, region = channel_name)
+
+        mc_samples   = [s for s in self.config_dict["Samples"] if not s.get("Data", False)]
+        data_samples = [s for s in self.config_dict["Samples"] if s.get("Data", False)]
+        if len(data_samples) > 1:
+            raise NotImplementedError(f"Region {channel_name}: more than one sample is flagged `Data: True` ({[s['Name'] for s in data_samples]}); only one observed sample is supported.")
+
+        if region_binning is None:
+            feature_arr_tmp = dataset_region_dict["Nominal"][mc_samples[0]["Name"]][region_variable]
+            region_binning = np.linspace(np.amin(feature_arr_tmp), np.amax(feature_arr_tmp), num=2) # Dummy binning for a single event yield calculation in unbinned region
+            region["Binning"] = region_binning
+
+        def histogram_of(sample_name: str) -> np.ndarray:
+            dataset_sample = dataset_region_dict["Nominal"][sample_name]
+            feature_var    = np.clip(dataset_sample[region_variable], np.amin(region_binning), np.amax(region_binning))
+            hist, _        = np.histogram(feature_var, weights = dataset_sample["weights"].to_numpy(), bins = region_binning)
+            return hist
+
+        # Channel: one entry per MC sample with its nominal histogram and its normfactor and systematic modifiers
+        samples = []
+        for sample_dict in mc_samples:
+            sample_name = sample_dict["Name"]
+            sample_data = histogram_of(sample_name)
+            modifiers   = self.normfactor_modifiers(channel_name, sample_name)
+            modifiers  += self.sys_modifiers(dataset_region_dict, region, sample_dict, sample_data, type_of_fit = type_of_fit)
+            samples.append({"name": sample_name, "data": list(sample_data), "modifiers": modifiers})
+
+        channel = {"name": channel_name, "type": channel_type, "samples": samples}
+
+        # Observation: the sample flagged `Data: True` when the config declares one (a missing or unreadable file for it raises in the dataset loader rather than being papered over). Without one, the Asimov expectation: the sum of every MC sample's nominal histogram.
+        if data_samples:
+            observed_sample_names = [data_samples[0]["Name"]]
+        else:
+            observed_sample_names = [s["Name"] for s in mc_samples]
+            logging.info(f"Region {channel_name}: no sample flagged `Data: True`, using the Asimov expectation (sum of {observed_sample_names}) as the observation")
+
+        observed_data = np.zeros(len(region_binning) - 1)
+        for sample_name in observed_sample_names:
+            observed_data = observed_data + histogram_of(sample_name)
+
+        observation = {"name": channel_name, "data": list(observed_data)}
+
+        if type_of_fit == "unbinned":
+            trained_models_list = self.config_dict.get("TrainedModels", None)
+            idx_region          = self.config.get_index_unbinned_regions(channel_name)
+
+            logging.info(f"Unbinned region {channel_name} has trained models for samples {[m['Name'] for m in trained_models_list[idx_region]['Models']]}")
+
+            ratio_dict = {
+                model["Name"]: model.get("Nominal", {}).get("Ratios")
+                for model in trained_models_list[idx_region].get("Models", [])
+            }
+            observation.update({"ratios": ratio_dict,
+                                "weights": trained_models_list[idx_region].get("Weights")})
+
+        return channel, observation
+
+    def channels(self) -> List[Dict[str, Any]]:
         """Build the ``"channels"`` list for the workspace.
 
-        For every region in the configuration, loads datasets from ROOT files, computes nominal histograms, attaches density-ratio file paths (for unbinned regions), and collects all applicable normfactor and systematic modifiers per sample.
+        For every region in the configuration, loads datasets from ROOT files, computes nominal histograms and collects all applicable normfactor and systematic modifiers per sample. :meth:`build` obtains channels and observations from one pass over the data; call this directly only when the observations are not needed.
 
         Returns
         -------
         list of dict
             Each dict represents one channel with keys ``"name"``, ``"type"`` (``"binned"``/``"unbinned"``) and ``"samples"``. The sample flagged ``Data: True`` is not part of the model and is handled by :meth:`observations`.
         """
-        channels = []
-
-
-        for region in self.config_dict["Regions"]:
-            channel = {}
-            channel_name = region["Name"]
-            channel_type = region["Type"]
-            channel.update({"name": channel_name,
-                            "type": channel_type})
-            type_of_fit  = channel_type
-
-            region_binning      = region.get("Binning", None)
-            region_variable     = region.get("Variable", None)
-                
-            region_filters      = region["Filter"]
-
-            # Extract variable names used in the Filter expression
-            # so the dataset loader reads the columns needed for df.query()
-            filter_variables = [tok for tok in re.split(r'[<>=!&|()\s]+', region_filters)
-                                if tok and not tok.replace('.','',1).lstrip('-').isdigit()]
-
-            if region_variable is None:
-                # For unbinned regions with no explicit Variable, use the first
-                # filter variable for the dummy single-bin yield histogram
-                region_variable = filter_variables[0]
-                region["Variable"] = region_variable
-
-            branches_to_load = [region_variable]
-            for v in filter_variables:
-                if v not in branches_to_load:
-                    branches_to_load.append(v)
-                
-            samples = []
-            branches_to_load_sample  = branches_to_load.copy()
-
-            datasets            = nsbi_common_utils.datasets.datasets(self.config_path,
-                                                                branches_to_load =  branches_to_load_sample)
-            datasets_incl       = datasets.load_datasets_from_config(load_systematics = True)
-            dataset_region_dict = datasets.filter_region_by_type(datasets_incl, 
-                                                                     region = channel_name)
-            for sample_dict in self.config_dict["Samples"]:
-
-                current_sample = {}
-                
-                sample_name     = sample_dict["Name"]
-                is_data         = sample_dict.get("Data", False)
-                if is_data:
-                    continue
-
-                current_sample.update({"name": sample_name})
-                
-                dataset_nominal_sample = dataset_region_dict["Nominal"][sample_name].copy()
-                
-                if region_binning is None:
-                    feature_arr_tmp = dataset_nominal_sample[region_variable]
-                    region_binning = np.linspace(np.amin(feature_arr_tmp), np.amax(feature_arr_tmp), num=2) # Dummy binning for a single event yield calculation in unbinned region
-                    region["Binning"] =  region_binning
-                    
-                feature_var         = np.clip(dataset_nominal_sample[region_variable],
-                                              np.amin(region_binning), np.amax(region_binning))
-                
-                weights = dataset_region_dict["Nominal"][sample_name]["weights"].to_numpy()
-                    
-                sample_data, _       = np.histogram(feature_var, weights = weights, bins = region_binning)
-                                    
-                current_sample.update({"data": list(sample_data)})
-                
-
-                modifiers = []
-
-                # modifiers can have region and sample dependence, which is checked
-                # check if normfactors affect sample in region, add modifiers as needed
-                nf_modifier_list = self.normfactor_modifiers(channel_name, sample_name)
-
-                modifiers += nf_modifier_list
-
-                # check if systematics affect sample in region, add modifiers as needed
-                sys_modifier_list = self.sys_modifiers(dataset_region_dict, region, sample_dict, sample_data, type_of_fit = type_of_fit)
-                modifiers += sys_modifier_list
-
-                current_sample.update({"modifiers": modifiers})  
-
-                samples.append(current_sample)
-                    
-                
-            channel.update({"samples": samples})
-            channels.append(channel)
-
-        return channels
+        return [self._region_payload(region)[0] for region in self.config_dict["Regions"]]
 
     def observations(self) -> List[Dict[str, Any]]:
         """Build the ``"observations"`` list for the workspace.
 
-        For every region in the configuration, histograms the observed sample (the one flagged ``Data: True``) with the region's ``Variable`` and ``Binning``. When no sample is flagged, the Asimov expectation, i.e. the sum of all MC samples' nominal histograms, is used instead. For unbinned regions the entry also carries the paths to the per-event weights and nominal density ratios listed under ``TrainedModels``.
+        For every region in the configuration, histograms the observed sample (the one flagged ``Data: True``) with the region's ``Variable`` and ``Binning``. When no sample is flagged, the Asimov expectation, i.e. the sum of all MC samples' nominal histograms, is used instead. For unbinned regions the entry also carries the paths to the per-event weights and nominal density ratios listed under ``TrainedModels``. :meth:`build` obtains channels and observations from one pass over the data; call this directly only when the channels are not needed.
 
         Returns
         -------
@@ -348,96 +360,7 @@ class WorkspaceBuilder:
         NotImplementedError
             If more than one sample is flagged ``Data: True``.
         """
-        observations = []
-
-
-        for region in self.config_dict["Regions"]:
-            channel = {}
-            channel_name = region["Name"]
-            channel_type = region["Type"]
-            channel.update({"name": channel_name,
-                            "type": channel_type})
-            type_of_fit  = channel_type
-
-            region_binning      = region.get("Binning", None)
-            region_variable     = region.get("Variable", None)
-                
-            region_filters      = region["Filter"]
-
-            # Extract variable names used in the Filter expression
-            # so the dataset loader reads the columns needed for df.query()
-            filter_variables = [tok for tok in re.split(r'[<>=!&|()\s]+', region_filters)
-                                if tok and not tok.replace('.','',1).lstrip('-').isdigit()]
-
-            if region_variable is None:
-                # For unbinned regions with no explicit Variable, use the first
-                # filter variable for the dummy single-bin yield histogram
-                region_variable = filter_variables[0]
-                region["Variable"] = region_variable
-
-            branches_to_load = [region_variable]
-            for v in filter_variables:
-                if v not in branches_to_load:
-                    branches_to_load.append(v)
-                
-            samples = []
-            branches_to_load_sample  = branches_to_load.copy()
-
-            datasets            = nsbi_common_utils.datasets.datasets(self.config_path,
-                                                                branches_to_load =  branches_to_load_sample)
-            datasets_incl       = datasets.load_datasets_from_config(load_systematics = True)
-            dataset_region_dict = datasets.filter_region_by_type(datasets_incl, 
-                                                                     region = channel_name)
-            # The observation is the sample flagged `Data: True` when the config declares one (a missing or unreadable file for it raises in the dataset loader rather than being papered over). Without one, the observation is the Asimov expectation: the sum of every MC sample's nominal histogram, which reproduces the pre-observed-data behaviour of fitting the expectation to itself.
-            data_samples = [s for s in self.config_dict["Samples"] if s.get("Data", False)]
-            if len(data_samples) > 1:
-                raise NotImplementedError(f"Region {channel_name}: more than one sample is flagged `Data: True` ({[s['Name'] for s in data_samples]}); only one observed sample is supported.")
-            if data_samples:
-                observed_sample_names = [data_samples[0]["Name"]]
-            else:
-                observed_sample_names = [s["Name"] for s in self.config_dict["Samples"]]
-                logging.info(f"Region {channel_name}: no sample flagged `Data: True`, using the Asimov expectation (sum of {observed_sample_names}) as the observation")
-
-            if region_binning is None:
-                feature_arr_tmp = dataset_region_dict["Nominal"][observed_sample_names[0]][region_variable]
-                region_binning = np.linspace(np.amin(feature_arr_tmp), np.amax(feature_arr_tmp), num=2) # Dummy binning for a single event yield calculation in unbinned region
-                region["Binning"] =  region_binning
-
-            sample_data = np.zeros(len(region_binning) - 1)
-            for sample_name in observed_sample_names:
-                dataset_nominal_sample = dataset_region_dict["Nominal"][sample_name]
-                feature_var = np.clip(dataset_nominal_sample[region_variable],
-                                      np.amin(region_binning), np.amax(region_binning))
-                weights     = dataset_nominal_sample["weights"].to_numpy()
-                hist, _     = np.histogram(feature_var, weights = weights, bins = region_binning)
-                sample_data = sample_data + hist
-
-            observation = {
-                "name": channel_name,
-                "data": list(sample_data),
-            }
-
-
-            if type_of_fit == "unbinned":
-                trained_models_list = self.config_dict.get("TrainedModels", None)
-
-                idx_region = self.config.get_index_unbinned_regions(region["Name"])
-
-                logging.info(f"Unbinned region {region['Name']} has trained models for samples {[m['Name'] for m in trained_models_list[idx_region]["Models"]]}")
-
-                weights_path = trained_models_list[idx_region].get("Weights")
-
-                ratio_dict = {
-                    model["Name"]: model.get("Nominal", {}).get("Ratios")
-                    for model in trained_models_list[idx_region].get("Models", [])
-                }
-
-                observation.update({"ratios": ratio_dict,
-                                    "weights": weights_path})
-            observations.append(observation)
-                
-                                
-        return observations
+        return [self._region_payload(region)[1] for region in self.config_dict["Regions"]]
 
     def measurements(self) -> List[Dict[str, Any]]:
         """Build the ``"measurements"`` list for the workspace.
@@ -496,7 +419,7 @@ class WorkspaceBuilder:
     def build(self) -> Dict[str, Any]:
         """Construct the full workspace dictionary.
 
-        Calls :meth:`channels`, :meth:`observations` and :meth:`measurements` and combines them with a version tag into the top-level workspace dict.
+        Builds the channel and the observation of every region in a single pass over its datasets, adds :meth:`measurements` and a version tag, and returns the top-level workspace dict.
 
         Returns
         -------
@@ -509,9 +432,12 @@ class WorkspaceBuilder:
         measurements = self.measurements()
         ws.update({"measurements": measurements})
 
-        # channels and observations
-        channels = self.channels()
-        observations = self.observations()
+        # channels and observations, from one pass over the datasets of each region
+        channels, observations = [], []
+        for region in self.config_dict["Regions"]:
+            channel, observation = self._region_payload(region)
+            channels.append(channel)
+            observations.append(observation)
 
         ws.update({"channels": channels})
         ws.update({"observations": observations})

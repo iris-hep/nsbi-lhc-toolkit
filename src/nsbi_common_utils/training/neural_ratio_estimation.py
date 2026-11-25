@@ -10,7 +10,7 @@ import warnings
 try:
     from sklearn.exceptions import InconsistentVersionWarning
     warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-except (ImportError, TypeError):
+except (ImportError, TypeError, AssertionError):
     pass
 
 import torch
@@ -597,12 +597,16 @@ class density_ratio_trainer:
         Plot predictions for training and holdout to test compatibility
         '''
 
+        all_ratios = np.concatenate([self.ratio_den_training, self.ratio_den_holdout,
+                                     self.ratio_num_training, self.ratio_num_holdout])
+        ratio_max = float(np.nanpercentile(all_ratios[np.isfinite(all_ratios)], 99.5))
+
         plot_overfit_side_by_side(
             self.ratio_den_training, self.ratio_den_holdout,
             self.weight_den_training, self.weight_den_holdout,
             self.ratio_num_training, self.ratio_num_holdout,
             self.weight_num_training, self.weight_num_holdout,
-            nbins=30, plotRange=[0.0, 1.0], holdout_index=0,
+            nbins=30, plotRange=[0.0, ratio_max], holdout_index=0,
             labels=(f'{self.sample_name[1]}', f'{self.sample_name[0]}'),
             path_to_figures=self.path_to_figures, ensemble_index = ensemble_index
         )

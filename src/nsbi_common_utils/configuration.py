@@ -6,6 +6,7 @@ import os
 import pathlib
 import pkgutil
 import re
+import warnings
 from typing import Any, Literal, Optional, Union
 
 import yaml
@@ -271,6 +272,8 @@ class ConfigManager:
         return basis_samples
 
     def get_reference_samples(self):
+        """Deprecated: the reference mixture is defined by ``reference_priors`` in the pipeline config and built by :meth:`nsbi_common_utils.datasets.datasets.prepare_basis_training_dataset`. This reads the old per-sample ``UseAsReference`` flag and will be removed."""
+        warnings.warn("ConfigManager.get_reference_samples and the per-sample UseAsReference flag are deprecated; define the reference with reference_priors instead.", DeprecationWarning, stacklevel=2)
         reference_samples = []
         samples: list[dict[str, Any]] = self.config["Samples"]
         for count, sample in enumerate(samples):

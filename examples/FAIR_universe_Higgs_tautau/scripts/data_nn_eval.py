@@ -316,7 +316,7 @@ def main():
                                     calibration_model = pickle.load(file_calibration)
 
                         ratio_pred_all[ensemble_index] = nsbi_common_utils.training.predict_with_model(
-                            dataset_Asimov_SR[features], scaler, model_NN, calibration_model=calibration_model)
+                            dataset_Asimov_SR[features], scaler, model_NN, calibration_model=calibration_model, use_log_loss = use_log_loss)
                         loaded_indices.append(ensemble_index)
 
                     if not loaded_indices:

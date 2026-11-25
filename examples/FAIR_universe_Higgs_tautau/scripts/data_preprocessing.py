@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import mplhep as hep
+import uproot
 from nsbi_common_utils.configuration import load_pipeline_config
 import logging
 import warnings
@@ -141,7 +142,14 @@ def main() -> None:
                         + input_features_1Jets \
                         + input_features_2Jets \
                         + input_features_nJets
-    
+
+    # Carry the source row index written by data_loader through to the processed trees; fold assignment keys on it so the same event lands in the same fold in every variation.
+    _fit_config = nsbi_common_utils.configuration.ConfigManager(file_path_string=config['fit_config_path'])
+    _sample0 = _fit_config.config["Samples"][0]
+    with uproot.open(f"{_sample0['SamplePath']}:{_sample0['Tree']}") as _tree:
+        if "event_id" in _tree.keys() and "event_id" not in branches_to_load:
+            branches_to_load.append("event_id")
+
 
     input_features_by_jet = {
         1: input_features_1Jets, 
@@ -166,18 +174,23 @@ def main() -> None:
         logger.info(f"Adding {len(new_branches)} new engineered features to output schema.")
         datasets_helper.add_appended_branches(new_branches)
 
-        # Assign k-fold indices to nominal samples (deterministic, per-sample)
+        # Assign k-fold indices.
         num_folds = config.get("num_folds", 1)
         if num_folds > 1:
+            fold_seed = np.uint64(int(config.get("fold_seed", 0)))
             logger.info(f"Assigning {num_folds}-fold indices to all samples.")
             for region_key, sample_dict in datasets_all.items():
                 for sample_name, df in sample_dict.items():
-                    # Deterministic: seed on region+sample so each dataset
-                    digest = hashlib.sha256(f"{region_key}\x00{sample_name}".encode("utf-8")).hexdigest()
-                    seed = int(digest, 16) % (2**31)
-                    rng = np.random.RandomState(seed)
-                    perm = rng.permutation(len(df))
-                    df["fold_index"] = perm % num_folds
+                    if "event_id" in df.columns:
+                        with np.errstate(over="ignore"):
+                            mixed = df["event_id"].to_numpy().astype(np.uint64) * np.uint64(0x9E3779B97F4A7C15) + fold_seed
+                        df["fold_index"] = ((mixed >> np.uint64(33)) % np.uint64(num_folds)).astype(np.int64)
+                    else:
+                        # Datasets written before event_id existed: fall back to a permutation seeded on the sample name only. Folds then line up across variations only if every tree holds the same events in the same order; rerun data_loader to get event_id.
+                        logger.warning(f"{region_key}/{sample_name}: no event_id branch, fold assignment is not guaranteed to match across systematic variations")
+                        digest = hashlib.sha256(sample_name.encode("utf-8")).hexdigest()
+                        rng = np.random.RandomState(int(digest, 16) % (2**31))
+                        df["fold_index"] = rng.permutation(len(df)) % num_folds
                     datasets_all[region_key][sample_name] = df
             datasets_helper.add_appended_branches(["fold_index"])
 

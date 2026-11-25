@@ -200,17 +200,6 @@ class sbi_parametric_model:
             break
         return list_samples
     
-    def _get_asimov_weights_array(self):
-        """
-        Get the Asimov weight vector for fitting
-        """
-        weight_array = np.array([])
-        for channel in self.channels_unbinned:
-            channel_index       = self._index_of_region(channel)
-            weights             = np.load(self.workspace["channels"][channel_index]["weights"])
-            weight_array        = np.append(weight_array, weights)
-        return weight_array
-    
     def _get_parameters(self, sorting_order):
         """Get a list of all parameters."""
         list_param_names = []

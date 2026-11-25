@@ -5,7 +5,7 @@ The fit configuration YAML file is the central input to the entire SBI workflow.
 
 - **Data preparation** — the ``datasets`` module reads sample paths, ROOT tree names, weight branches, and systematic variation files from the config to load and organise the data.
 - **Preselection training** — training features and feature scaling lists are retrieved via ``ConfigManager.get_training_features()``.
-- **Density-ratio training** — basis processes (``get_basis_samples()``), the reference hypothesis (``get_reference_samples()``), training features, and region filters (``get_channel_filters()``) are all read from the config.
+- **Density-ratio training** — basis processes (``get_basis_samples()``), training features, and region filters (``get_channel_filters()``) are read from the config; the reference mixture comes from ``reference_priors`` in the pipeline config.
 - **Systematic uncertainty training** — the ``Systematics`` block and ``get_samples_in_syst_for_training()`` determine which processes are affected by each variation and where the varied ROOT files are located.
 - **Evaluation** — Asimov weight paths (``get_channel_asimov_weight_path()``) and trained model metadata come from the config.
 - **Workspace building** — the :class:`~nsbi_common_utils.workspace_builder.WorkspaceBuilder` assembles the full statistical model from all of the above, producing a workspace dictionary that the statistical model consumes.
