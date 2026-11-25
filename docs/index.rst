@@ -67,6 +67,7 @@ For a hands-on walkthrough, see the :doc:`basics/model_building_example`.
    :caption: Basics
 
    basics/overview
+   basics/helloworld_gaussian_toy
    basics/density_ratio_training
    basics/preselection_training
    basics/fit_config

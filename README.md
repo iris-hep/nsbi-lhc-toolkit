@@ -72,6 +72,10 @@ The semi-parametric model and workflow is related to the SBI analysis recently p
 
 We demonstrate the usage of `nsbi-common-utils` applied to a full-scale LHC-style analysis in the `examples/`. The workflow currently uses the Higgs to tau tau dataset from FAIR universe challenge. More open datasets will be added in the future.
 
+- `examples/helloworld_gaussian_toy/` — start here: a Gaussian toy dataset, two density-ratio networks, a demonstration of building and using unbinned workspaces and a standard signal-strength fit.
+- `examples/model_building_example/` — workspace building and fitting from pre-computed density ratios, without the training pipeline.
+- `examples/FAIR_universe_Higgs_tautau/` — the most complete end-to-end analysis pipeline with data processing, preselection, ensemble trainings, systematic uncertainties and binned control regions, runnable as notebooks, scripts or a full, reproducible Snakemake workflow.
+
 ### Three ways to run an example
 
 Every example is driven by a single `config.pipeline.yaml` and can be executed through any of three equivalent entry points — pick whichever suits your task:

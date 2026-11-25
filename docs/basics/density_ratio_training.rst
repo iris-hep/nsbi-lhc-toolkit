@@ -40,10 +40,20 @@ A typical training call looks like:
 The trained model is automatically exported to ONNX format for portable, backend-agnostic inference.
 
 
+Choosing the reference
+----------------------
+
+Every basis process :math:`c` gets its own ratio :math:`r_c(x) = p_c(x) / p_\text{ref}(x)` against one common reference hypothesis. The reference does not need to be physical; it only needs to be the same for every ratio in the model, since it cancels in the likelihood.
+
+The recommended choice is an **equal mixture of the basis processes**, each normalised to the same total weight. With :math:`N` processes in the mixture every ratio is then bounded, :math:`r_c(x) \le N`, and approaches zero wherever another process dominates, which is numerically harmless. A reference that lacks one of the processes lets that process's ratio diverge in the phase space it dominates, and that is where per-event noise and estimator bias come from.
+
+In the FAIR example the mixture is set in ``config.pipeline.yaml`` under ``neural_likelihood_ratio_estimation.reference_priors`` and built by :meth:`~nsbi_common_utils.datasets.datasets.prepare_basis_training_dataset`; the :doc:`Gaussian toy example <helloworld_gaussian_toy>` builds it by hand in a few lines.
+
+
 Using the fit configuration
 ---------------------------
 
-In practice, many of the inputs to the trainer — training features, which processes to train, and which process serves as the reference hypothesis — are read from the :doc:`fit configuration file <fit_config>` via :class:`~nsbi_common_utils.configuration.ConfigManager`:
+In practice, many of the inputs to the trainer — training features and which processes to train — are read from the :doc:`fit configuration file <fit_config>` via :class:`~nsbi_common_utils.configuration.ConfigManager`:
 
 .. code-block:: python
 
@@ -56,9 +66,6 @@ In practice, many of the inputs to the trainer — training features, which proc
 
    # Which processes get their own density ratio network
    basis_samples = config.get_basis_samples()        # e.g. ["htautau", "ztautau"]
-
-   # The denominator process in the density ratio
-   reference_samples = config.get_reference_samples() # e.g. ["ztautau"]
 
    # Load data from ROOT files defined in the config
    datasets_helper = datasets.datasets(config_path="config_fit.yml", branches_to_load=features)
