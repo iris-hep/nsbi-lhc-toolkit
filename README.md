@@ -1,6 +1,5 @@
 # Toolkit for Simulation-Based Inference at the LHC
-
-The full documtation can be found here: [https://toolkit-for-simulation-based-inference.readthedocs.io](https://toolkit-for-simulation-based-inference.readthedocs.io/en/latest/index.html#)
+Full documentation: [![Documentation](https://readthedocs.org/projects/toolkit-for-simulation-based-inference/badge/?version=latest)](https://toolkit-for-simulation-based-inference.readthedocs.io/en/latest/)
 
 -----
 
@@ -10,6 +9,7 @@ The full documtation can be found here: [https://toolkit-for-simulation-based-in
 - [Introduction](#introduction)
 - [Library](#library)
 - [License](#license)
+
 
 ## Setup
 
