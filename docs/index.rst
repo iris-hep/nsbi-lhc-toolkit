@@ -65,8 +65,10 @@ Once installed, building a statistical model and running a fit takes just a few 
    # Fit and profile
    fitter = inference.inference(
        model_nll=model.model,
+       model_grad=model.model_grad,
+       initial_values=init_vals,
        list_parameters=params,
-       initial_parameter_values=init_vals,
+       num_unconstrained_params=model.num_unconstrained_param,
    )
    fitter.perform_fit()
 
