@@ -1,0 +1,155 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://raw.githubusercontent.com/iris-hep/nsbi-lhc-toolkit/main/src/nsbi_common_utils/schemas/workspace.json",
+    "title": "nsbi_common_utils workspace schema",
+    "description": "pyhf-like workspace consumed by nsbi_common_utils.models.sbi_parametric_model: binned and unbinned channels, observations, measurements",
+    "type": "object",
+    "required": ["channels", "observations", "measurements", "version"],
+    "properties": {
+        "channels": {
+            "description": "list of analysis channels with the expected contribution of every sample",
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/definitions/channel"}
+        },
+        "observations": {
+            "description": "observed data of every channel, in the same order as channels",
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/definitions/observation"}
+        },
+        "measurements": {
+            "description": "list of measurements (parameter of interest and parameter settings)",
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/definitions/measurement"}
+        },
+        "version": {
+            "description": "workspace schema version",
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "definitions": {
+        "channel": {
+            "title": "Channel",
+            "type": "object",
+            "required": ["name", "type", "samples"],
+            "properties": {
+                "name": {"description": "channel name", "type": "string"},
+                "type": {
+                    "description": "\"binned\" for a histogram channel, \"unbinned\" for an NSBI channel",
+                    "type": "string",
+                    "enum": ["binned", "unbinned"]
+                },
+                "samples": {
+                    "description": "one entry per sample of the model",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"$ref": "#/definitions/sample"}
+                }
+            },
+            "additionalProperties": false
+        },
+        "sample": {
+            "title": "Sample",
+            "type": "object",
+            "required": ["name", "data", "modifiers"],
+            "properties": {
+                "name": {"description": "sample name", "type": "string"},
+                "data": {
+                    "description": "expected yield per bin (a single total yield for an unbinned channel)",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"type": "number"}
+                },
+                "modifiers": {
+                    "description": "modifiers acting on this sample",
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/modifier"}
+                }
+            },
+            "additionalProperties": false
+        },
+        "modifier": {
+            "title": "Modifier",
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+                "name": {"description": "parameter name", "type": "string"},
+                "type": {
+                    "description": "modifier type",
+                    "type": "string",
+                    "enum": ["normfactor", "normplusshape"]
+                },
+                "data": {
+                    "description": "null for a normfactor; for a normplusshape the up/down variation of the yields (hi_data, lo_data) and, in an unbinned channel, the paths to the up/down density-ratio arrays (hi_ratio, lo_ratio)",
+                    "type": ["object", "null"],
+                    "properties": {
+                        "hi_data": {"type": "array", "items": {"type": "number"}},
+                        "lo_data": {"type": "array", "items": {"type": "number"}},
+                        "hi_ratio": {"type": ["string", "null"]},
+                        "lo_ratio": {"type": ["string", "null"]}
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "observation": {
+            "title": "Observation",
+            "type": "object",
+            "required": ["name", "data"],
+            "properties": {
+                "name": {"description": "channel name this observation belongs to", "type": "string"},
+                "data": {
+                    "description": "observed counts per bin (the total observed yield for an unbinned channel)",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"type": "number"}
+                },
+                "weights": {
+                    "description": "unbinned channels: path to the .npy array of per-event weights of the observed events",
+                    "type": "string"
+                },
+                "ratios": {
+                    "description": "unbinned channels: sample name to path of the .npy array of nominal density ratios evaluated on the observed events",
+                    "type": "object",
+                    "additionalProperties": {"type": "string"}
+                }
+            },
+            "additionalProperties": false
+        },
+        "measurement": {
+            "title": "Measurement",
+            "type": "object",
+            "required": ["name", "config"],
+            "properties": {
+                "name": {"description": "measurement name", "type": "string"},
+                "config": {
+                    "type": "object",
+                    "required": ["poi", "parameters"],
+                    "properties": {
+                        "poi": {"description": "parameter of interest", "type": "string"},
+                        "parameters": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "inits": {"type": "array", "items": {"type": "number"}},
+                                    "bounds": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                                    "fixed": {"type": "boolean"}
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

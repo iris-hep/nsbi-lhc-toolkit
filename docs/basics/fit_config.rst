@@ -12,6 +12,8 @@ The fit configuration YAML file is the central input to the entire SBI workflow.
 
 This page is the canonical reference for the YAML format. For the Python API, see :doc:`/api/workspace_builder`. For a hands-on walkthrough, see :doc:`model_building_example`.
 
+Every config is validated on load against the JSON schema shipped with the package (``nsbi_common_utils/schemas/config.json``). Workspaces are validated the same way against ``schemas/workspace.json`` when a model is built from them.
+
 Measurement and parameters
 --------------------------
 

@@ -1,3 +1,6 @@
+import json
+import pkgutil
+import jsonschema
 import numpy as np
 import os
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -8,6 +11,36 @@ import jax.numpy as jnp
 from jax.tree_util import tree_map
 from functools import partial
 from typing import Dict, Union, Any, Optional
+
+
+def validate_workspace(workspace: Dict[str, Any]) -> bool:
+    """Validate a workspace against ``schemas/workspace.json``.
+
+    Parameters
+    ----------
+    workspace : dict
+        Workspace dictionary, as produced by :class:`~nsbi_common_utils.workspace_builder.WorkspaceBuilder` or written by hand.
+
+    Raises
+    ------
+    ValueError
+        If the workspace does not satisfy the schema; the message lists every violation with its location.
+
+    Returns
+    -------
+    bool
+        ``True`` when the workspace is valid.
+    """
+    schema_text = pkgutil.get_data("nsbi_common_utils", "schemas/workspace.json")
+    if schema_text is None:
+        raise FileNotFoundError("could not load workspace schema")
+    workspace_schema = json.loads(schema_text)
+    errors = sorted(jsonschema.Draft7Validator(workspace_schema).iter_errors(workspace), key=lambda e: list(e.absolute_path))
+    if errors:
+        details = "\n  - ".join(f"{'/'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}" for e in errors)
+        raise ValueError(f"Workspace does not satisfy the schema {workspace_schema['$id']}:\n  - {details}")
+    return True
+
 
 class sbi_parametric_model:
     """
@@ -46,6 +79,7 @@ class sbi_parametric_model:
                  measurement_to_fit: str):
 
         self.workspace                                  = workspace
+        validate_workspace(workspace)
         self.measurements_dict: list[Dict[str, Any]]    = workspace["measurements"]
         for measurement in self.measurements_dict:
             measurement_name = measurement.get("name")

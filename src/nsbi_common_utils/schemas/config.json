@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://raw.githubusercontent.com/jaysandesara/NSBI-workflow-tutorial/main/src/nsbi_common_utils/schemas/config.json",
+    "$id": "https://raw.githubusercontent.com/iris-hep/nsbi-lhc-toolkit/main/src/nsbi_common_utils/schemas/config.json",
     "title": "nsbi_common_utils config schema",
     "description": "full schema for the nsbi_common_utils fit configuration file",
     "type": "object",
@@ -13,7 +13,7 @@
         },
         "Samples": {
             "title": "Samples",
-            "description": "list of samples",
+            "description": "list of samples; at most one may be flagged Data: true (the observed dataset)",
             "type": "array",
             "minItems": 1,
             "items": {
@@ -76,6 +76,17 @@
                 "$ref": "#/definitions/region"
             },
             "uniqueItems": true
+        },
+        "TrainedModels": {
+            "title": "TrainedModels",
+            "description": "trained density-ratio models and pre-computed ratio arrays, one entry per unbinned region",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+                "description": "trained models of one unbinned region",
+                "$ref": "#/definitions/trained_models_region"
+            },
+            "uniqueItems": true
         }
     },
     "definitions": {
@@ -124,7 +135,7 @@
         "sample": {
             "title": "Sample",
             "$$target": "#/definitions/sample",
-            "description": "a sample of a specific physics process",
+            "description": "a sample of a specific physics process, or the observed dataset when Data is true",
             "type": "object",
             "required": ["Name", "Tree", "SamplePath"],
             "properties": {
@@ -148,16 +159,12 @@
                     "description": "selection criteria to apply (override for region setting)",
                     "type": "string"
                 },
-                "UseAsReference": {
-                    "description": "whether this sample is used as the reference (denominator) sample in density ratio estimation",
-                    "type": "boolean"
-                },
                 "UseAsBasis": {
                     "description": "whether this sample is part of the basis used to construct the mixture model likelihood",
                     "type": "boolean"
                 },
                 "Data": {
-                    "description": "if it is a data sample",
+                    "description": "whether this sample is the observed dataset; when no sample is flagged, the Asimov expectation is used as the observation",
                     "type": "boolean"
                 },
                 "Regions": {
@@ -302,10 +309,10 @@
             "description": "a region of phase space, either binned or unbinned (NSBI / density-ratio based)",
             "$$description": [
                 "binned regions require Variable and Binning;",
-                "unbinned regions typically have Variable=null and Binning=null and define TrainedModels"
+                "unbinned regions typically have Variable=null and Binning=null and are described by a TrainedModels entry"
             ],
             "type": "object",
-            "required": ["Name", "Type"],
+            "required": ["Name", "Type", "Filter"],
             "properties": {
                 "Name": {
                     "description": "name of the region",
@@ -317,7 +324,7 @@
                     "enum": ["binned", "unbinned"]
                 },
                 "Filter": {
-                    "description": "selection criteria defining the region (e.g. \"presel_score>=-1.0 & presel_score<=4.5\")",
+                    "description": "selection criteria defining the region (e.g. \"presel_score>=1.0 & presel_score<=4.5\")",
                     "type": "string"
                 },
                 "Variable": {
@@ -331,20 +338,6 @@
                     "items": {
                         "description": "bin edge",
                         "type": "number"
-                    },
-                    "uniqueItems": true
-                },
-                "AsimovWeights": {
-                    "description": "path to a .npy file containing per-event Asimov weights, used for unbinned regions",
-                    "type": "string"
-                },
-                "TrainedModels": {
-                    "description": "trained density-ratio model and ratio file paths per sample, used for unbinned regions",
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "description": "trained-model entry for one sample",
-                        "$ref": "#/definitions/trained_model_entry"
                     },
                     "uniqueItems": true
                 },
@@ -374,15 +367,43 @@
             ],
             "additionalProperties": false
         },
+        "trained_models_region": {
+            "title": "TrainedModels region entry",
+            "$$target": "#/definitions/trained_models_region",
+            "description": "trained models, per-event weights and pre-computed ratio arrays describing one unbinned region",
+            "type": "object",
+            "required": ["RegionName", "Models"],
+            "properties": {
+                "RegionName": {
+                    "description": "name of the unbinned region (must match a Region defined in Regions)",
+                    "type": "string"
+                },
+                "Weights": {
+                    "description": "path to a .npy file with the per-event weights of the observed (or Asimov) events in the region",
+                    "type": "string"
+                },
+                "Models": {
+                    "description": "trained density-ratio models and ratio file paths, one entry per basis sample",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "description": "trained-model entry for one sample",
+                        "$ref": "#/definitions/trained_model_entry"
+                    },
+                    "uniqueItems": true
+                }
+            },
+            "additionalProperties": false
+        },
         "trained_model_entry": {
-            "title": "TrainedModels entry",
+            "title": "TrainedModels sample entry",
             "$$target": "#/definitions/trained_model_entry",
             "description": "trained density-ratio models and pre-computed ratio arrays for a single sample in an unbinned region",
             "type": "object",
-            "required": ["SampleName", "Nominal"],
+            "required": ["Name", "Nominal"],
             "properties": {
-                "SampleName": {
-                    "description": "name of the sample these trained models / ratios correspond to",
+                "Name": {
+                    "description": "name of the sample these trained models / ratios correspond to (must match a Sample defined in Samples)",
                     "type": "string"
                 },
                 "Nominal": {

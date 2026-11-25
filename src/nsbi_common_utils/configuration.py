@@ -9,6 +9,7 @@ import re
 import warnings
 from typing import Any, Literal, Optional, Union
 
+import jsonschema
 import yaml
 
 
@@ -250,15 +251,33 @@ class ConfigManager:
             config (dict[str, Any]): nsbi_common_utils configuration
 
         Raises:
-            NotImplementedError: when more than one data sample is found
-            ValueError: when region / sample / normfactor / systematic names are not unique
+            ConfigError: when the config does not satisfy ``schemas/config.json``, or when region / sample / normfactor / systematic names are not unique
 
         Returns:
             bool: whether the validation was successful
         """
+        # load json schema for config and validate against it
+        schema_text = pkgutil.get_data(__name__, "schemas/config.json")
+        if schema_text is None:
+            raise FileNotFoundError("could not load config schema")
+        config_schema = json.loads(schema_text)
+        errors = sorted(jsonschema.Draft7Validator(config_schema).iter_errors(config), key=lambda e: list(e.absolute_path))
+        if errors:
+            details = "\n  - ".join(f"{'/'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}" for e in errors)
+            raise ConfigError(f"Config does not satisfy the schema {config_schema['$id']}:\n  - {details}")
 
-        # TBA
-        
+        # check that no more than one data sample is present
+        data_samples = [s["Name"] for s in config["Samples"] if s.get("Data", False)]
+        if len(data_samples) > 1:
+            raise ConfigError(f"only one data sample is supported, found {data_samples}")
+
+        # check that names of regions, samples, normfactors and systematics are unique
+        for block in ["Regions", "Samples", "NormFactors", "Systematics"]:
+            names = [entry["Name"] for entry in config.get(block, [])]
+            duplicates = sorted({n for n in names if names.count(n) > 1})
+            if duplicates:
+                raise ConfigError(f"{block} names are not unique: {duplicates}")
+
         # if no issues are found
         return True
 

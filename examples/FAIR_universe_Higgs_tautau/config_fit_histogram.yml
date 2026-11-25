@@ -14,21 +14,18 @@ Samples:
       Tree              : tree_htautau
       SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : True
       UseAsBasis        : True
 
     - Name              : ttbar
       Tree              : tree_ttbar
       SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : True
       UseAsBasis        : True
         
     - Name : ztautau
       Tree              : tree_ztautau
       SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : False
       UseAsBasis        : True
 
 NormFactors:
