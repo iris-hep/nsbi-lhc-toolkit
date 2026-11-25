@@ -35,6 +35,16 @@ Or, for a full environment with all dependencies (recommended):
    pixi install -e nsbi-env      # CPU-only
    pixi install -e nsbi-env-gpu  # with CUDA support
 
+Where to start
+--------------
+
+**Start with the** :doc:`Gaussian toy example <basics/helloworld_gaussian_toy>`. In four short notebooks it generates a toy dataset, trains two density-ratio networks, writes an unbinned workspace by hand and fits a signal strength prameter, using the training and model APIs directly with no configuration files. It takes a few minutes on a laptop and shows every piece of the method once.
+
+From there:
+
+- :doc:`basics/model_building_example` — workspace building and fitting from a YAML fit configuration and pre-computed density ratios, without the training step.
+- :doc:`basics/workflow` — the end-to-end FAIR Universe Higgs to tau tau pipeline with data processing, preselection, ensemble trainings, systematic uncertainties and binned control regions, as notebooks, scripts or a full Snakemake workflow on a cluster.
+
 
 Statistical Model Building with SBI
 -----------------------------------
