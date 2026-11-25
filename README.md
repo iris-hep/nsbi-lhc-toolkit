@@ -39,7 +39,7 @@ pixi run -e nsbi-env-gpu python -m ipykernel install --user --name nsbi-env-gpu 
 Clone the repo:
 
 ```shell
-git clone git@github.com:iris-hep/NSBI-workflow-tutorial.git --depth=1
+git clone git@github.com:iris-hep/nsbi-lhc-toolkit.git
 ```
 
 (The example datasets are no longer distributed via Git LFS — pre-processed bundles live on cernbox; see the per-example README for the download link.)
