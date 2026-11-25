@@ -17,7 +17,7 @@ Key features
 - **Statistical models** — pyhf-like workspace specification supporting both binned (template-based) and unbinned (SBI-style) analysis regions with HistFactory-style systematic uncertainties, compiled to JAX for fast NLL evaluation and automatic differentiation.
 - **Inference engine** — profile-likelihood fits and NLL scans via iminuit with analytic gradients, plus plotting utilities.
 - **Configuration-driven** — a single YAML :doc:`fit configuration <basics/fit_config>` defines samples, features, systematics, and regions, and is consumed across all stages of the pipeline via :class:`~nsbi_common_utils.configuration.ConfigManager`.
-- **Workflow integration** — HTCondor/DAGMan job descriptions for large-scale cluster submission, with end-to-end example pipelines.
+- **Workflow integration** — a Snakemake workflow that orchestrates the full pipeline as a parallel DAG on any batch system (HTCondor, SLURM, local), with end-to-end example pipelines and three equivalent entry points (notebooks, scripts, or Snakemake). See :doc:`basics/workflow`.
 
 Getting started
 ---------------
@@ -34,6 +34,16 @@ Or, for a full environment with all dependencies (recommended):
 
    pixi install -e nsbi-env      # CPU-only
    pixi install -e nsbi-env-gpu  # with CUDA support
+
+Where to start
+--------------
+
+**Start with the** :doc:`Gaussian toy example <basics/helloworld_gaussian_toy>`. In four short notebooks it generates a toy dataset, trains two density-ratio networks, writes an unbinned workspace by hand and fits a signal strength prameter, using the training and model APIs directly with no configuration files. It takes a few minutes on a laptop and shows every piece of the method once.
+
+From there:
+
+- :doc:`basics/model_building_example` — workspace building and fitting from a YAML fit configuration and pre-computed density ratios, without the training step.
+- :doc:`basics/workflow` — the end-to-end FAIR Universe Higgs to tau tau pipeline with data processing, preselection, ensemble trainings, systematic uncertainties and binned control regions, as notebooks, scripts or a full Snakemake workflow on a cluster.
 
 
 Statistical Model Building with SBI
@@ -55,8 +65,10 @@ Once installed, building a statistical model and running a fit takes just a few 
    # Fit and profile
    fitter = inference.inference(
        model_nll=model.model,
+       model_grad=model.model_grad,
+       initial_values=init_vals,
        list_parameters=params,
-       initial_parameter_values=init_vals,
+       num_unconstrained_params=model.num_unconstrained_param,
    )
    fitter.perform_fit()
 
@@ -67,6 +79,7 @@ For a hands-on walkthrough, see the :doc:`basics/model_building_example`.
    :caption: Basics
 
    basics/overview
+   basics/helloworld_gaussian_toy
    basics/density_ratio_training
    basics/preselection_training
    basics/fit_config

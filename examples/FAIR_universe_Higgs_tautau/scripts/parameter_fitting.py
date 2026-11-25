@@ -4,7 +4,7 @@ import logging
 import warnings
 import matplotlib.pyplot as plt
 import mplhep as hep
-import yaml
+from nsbi_common_utils.configuration import load_pipeline_config
 import jax
 
 import nsbi_common_utils
@@ -33,8 +33,7 @@ def parse_args():
     return parser.parse_args()
 
 def load_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_pipeline_config(path)
 
 def save_nll_plot(scan_data, output_dir, parameter_label):
     """Plots the NLL scans and saves the figure."""
@@ -61,9 +60,7 @@ def save_nll_plot(scan_data, output_dir, parameter_label):
     
     plt.axhline(1, color='gray', linestyle=':', alpha=0.5)
     plt.axhline(4, color='gray', linestyle=':', alpha=0.5)
-    
-    hep.atlas.label(data=False, label="Internal", loc=0)
-    
+
     output_path = os.path.join(output_dir, "nll_scan_comparison.png")
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
@@ -74,6 +71,7 @@ def main():
     args = parse_args()
     config_workflow = load_config(args.config)["parameter_fitting"]
     
+    freeze_params = config_workflow.get("freeze_params", [])
     plots_dir = config_workflow["output"]["plots_dir"]
     
     logger.info("Starting Inference Pipeline")
@@ -123,8 +121,6 @@ def main():
 
         logger.info("\nPerforming Fits (Tables logged to file)")
 
-        # freeze_params = ["JES", "TES"]
-        freeze_params = []
         if len(freeze_params)>0:
             print(f"Freezing params {freeze_params} to nominal values, they will not be floated for fits.")
         

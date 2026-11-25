@@ -1,15 +1,32 @@
+# Every dataset and model location in this file (and in config_fit_nsbi.yml /
+# config_fit_histogram.yml) is written as ${NSBI_DATA_DIR:-./saved_datasets}.
+# Leave NSBI_DATA_DIR unset and everything resolves relative to this directory,
+# which is what a fresh clone wants. To run against storage elsewhere - shared
+# cluster filesystem, scratch disk, an extracted saved_datasets.tar.gz - export
+# the variable instead of editing these paths:
+#
+#     export NSBI_DATA_DIR=/path/to/saved_datasets
+#
+# The CHTC Snakemake profile sets it per job in profiles/chtc/job_wrapper.sh.
+
 # Data loader settings - these are specific to the Higgs to tau tau example
 data_loader:
   data:
     url: "https://zenodo.org/records/15131565/files/FAIR_Universe_HiggsML_data.zip"
-    train_size: 0.5
     processes:
       - htautau
       - ztautau
       - ttbar
+    fractions:
+      htautau: 0.2
+      ztautau: 0.3
+      ttbar:   1.0
+    chunk_rows: 2000000       # source rows streamed per chunk; peak memory is a few copies of one chunk
+    test_size: 0.3            # first fraction of rows reserved as the challenge's test set (HiggsML default); never used for training
 
   preprocess:
     seed: 42
+    balance: false              # true: downsample every process to the smallest one; false: keep all events
     selections: >
       DER_mass_transverse_met_lep <= 250.0 and
       DER_mass_vis <= 500.0 and
@@ -30,11 +47,12 @@ data_loader:
       jes: 0.998
 
   output:
-    dir: "./saved_datasets/"
+    dir: "${NSBI_DATA_DIR:-./saved_datasets}/"
 
 # Data processing settings - these are specific to the example
 data_preprocessing:
   fit_config_path: "./config_fit_nsbi.yml"
+  num_folds: 1                # k-fold cross-validation: set to 1 to disable
   features:
       - PRI_lep_pt
       - PRI_lep_eta
@@ -68,10 +86,10 @@ data_preprocessing:
 preselection_network:
   fit_config_path: "./config_fit_nsbi.yml"
   
-  model_path: "./saved_datasets/preselection_model/"
+  model_path: "${NSBI_DATA_DIR:-./saved_datasets}/preselection_model/"
   force_train: false
-  load_trained_models: false
-  
+  load_trained_models: true
+
   training:
     test_size: 0.2
     random_state: 42
@@ -100,42 +118,58 @@ preselection_network:
 neural_likelihood_ratio_estimation:
   nsbi_fit_config: "./config_fit_nsbi.yml"
   filter_region: "SR"
-  saved_data_path: "./saved_datasets/"
+  saved_data_path: "${NSBI_DATA_DIR:-./saved_datasets}/"
   output_training_dir: "output_training_nominal"
   
   use_log_loss: false
   delete_existing_models: false
   force_train: false
 
-  basis_processes_to_train: ["ttbar", "ztautau", "htautau"] 
-  num_ensemble_members_evaluation: 50 
+  basis_processes_to_train: ["ttbar", "ztautau", "htautau"]
+  num_ensemble_members_evaluation: 50
   num_ensemble_members_training: 50
 
-  # Some default hyper-parameters -- Quality tested for SBI
+  ensemble_aggregation_type: "mean"
+
+  # The dict's keys define which samples are in the reference; each spec is one of:
+  #   (a) null         -> use the sample's physical event-weight yield as its prior (auto-yield)
+  #   (b) <positive number> -> use as the relative prior weight directly (any unit; only ratios matter)
+  #   (c) {cap: M}     -> auto-solve the prior so this sample's per-event density ratio is bounded at M
+  #   (d) 0  (or false) -> exclude this sample from the reference (handy for toggling without deleting the line)
+  # Equal thirds: only ratios matter, so 1/1/1 gives each sample 1/3 of the class-0
+  # weight. Every basis process is now covered by the reference, which bounds each
+  # per-event ratio at 3 instead of letting it diverge where the reference has no support.
+  reference_priors:
+    htautau: 1
+    ttbar:   1
+    ztautau: 1
+
+  # Some default hyper-parameters - quality tested for SBI
   common_training_params: &common_params
-    hidden_layers: 4
+    hidden_layers: 5
     neurons: 1000
-    number_of_epochs: 100
+    number_of_epochs: 200
     batch_size: 1024
     learning_rate: 0.0001
     scalerType: "MinMax"
-    
+
     calibration: false
     recalibrate_output: false
     type_of_calibration: "histogram"
     num_bins_cal: null
-    
+
     callback: true
-    callback_patience: 30
-    callback_factor: 0.01
-    
+    callback_patience: 15
+    callback_factor: 0.1
+
     validation_split: 0.1
     holdout_split: 0.25
 
     load_trained_models: true  # 'force_train' flag in script overrides this
-    
+
     verbose: 1
     plot_scaled_features: false
+    use_best_checkpoint_model: true
 
     num_workers: 0
 
@@ -155,14 +189,18 @@ neural_likelihood_ratio_estimation:
 # Section for Systematic Uncertainty Estimation
 systematic_uncertainty:
   nsbi_fit_config: "./config_fit_nsbi.yml"
-  saved_data_path: "./saved_datasets/"
+  saved_data_path: "${NSBI_DATA_DIR:-./saved_datasets}/"
   output_training_dir: "output_training_systematics"
   filter_region: "SR"
-  force_train: true
+  force_train: false
 
-  num_ensemble_members_training: 40
-  num_ensemble_members_evaluation: 40
-  ensemble_aggregation_type: "median_score"
+  use_log_loss: false
+  num_ensemble_members_training: 1
+  num_ensemble_members_evaluation: 1
+  # Was "median_score" before the score -> ratio migration. Score-space aggregation
+  # no longer exists; "median" is the faithful equivalent, since r = s/(1-s) is
+  # strictly monotonic and the median is an order statistic.
+  ensemble_aggregation_type: "median"
 
   training_settings:
     hidden_layers: 4
@@ -176,20 +214,20 @@ systematic_uncertainty:
     recalibrate_output: false
     type_of_calibration: "histogram"
     num_bins_cal: 20
-    
+
     callback: true
     callback_patience: 30
     callback_factor: 0.01
-    
+
     validation_split: 0.1
     holdout_split: 0.25
-    
+
     verbose: 0
     plot_scaled_features: false
-    load_trained_models: false
+    load_trained_models: true
+    use_best_checkpoint_model: true
 
     num_workers: 0
-
 
 # Parameter fit settings
 parameter_fitting:
@@ -197,6 +235,8 @@ parameter_fitting:
     histogram: "./config_fit_histogram.yml"   
     nsbi: "./config_fit_nsbi.yml" 
   measurement: "higgs_tautau_signal_strength" 
+  freeze_params: []
+  # freeze_params: ["JES", "TES"]
   output:
     plots_dir: "./output/plots/parameter_fitting"
   scan:

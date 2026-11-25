@@ -32,7 +32,7 @@ API Reference
 .. currentmodule:: nsbi_common_utils.workspace_builder
 
 .. autoclass:: WorkspaceBuilder
-   :members: build, dump_workspace, load_workspace, channels, measurements, normfactor_modifiers, normplusshape_modifiers, sys_modifiers
+   :members: build, dump_workspace, load_workspace, channels, observations, measurements, normfactor_modifiers, normplusshape_modifiers, sys_modifiers
    :undoc-members: False
    :show-inheritance:
    :exclude-members: __init__

@@ -12,23 +12,20 @@ General:
 Samples:
     - Name              : htautau
       Tree              : tree_htautau
-      SamplePath        : ./saved_datasets/dataset_nominal.root
+      SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : True
       UseAsBasis        : True
 
     - Name              : ttbar
       Tree              : tree_ttbar
-      SamplePath        : ./saved_datasets/dataset_nominal.root
+      SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : True
       UseAsBasis        : True
         
     - Name : ztautau
       Tree              : tree_ztautau
-      SamplePath        : ./saved_datasets/dataset_nominal.root
+      SamplePath        : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root
       Weight            : weights
-      UseAsReference    : False
       UseAsBasis        : True
 
 NormFactors:
@@ -55,28 +52,28 @@ Systematics:
               - ttbar
         Up                  : 
             -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_JES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
                 Tree              : tree_htautau
                 Weight            : weights
             -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_JES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
                 Tree              : tree_ztautau
                 Weight            : weights
             -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_JES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_up.root
                 Tree              : tree_ttbar
                 Weight            : weights
         Dn                  :
             -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_JES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
                 Tree              : tree_htautau
                 Weight            : weights
             -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_JES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
                 Tree              : tree_ztautau
                 Weight            : weights
             -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_JES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_JES_dn.root
                 Tree              : tree_ttbar
                 Weight            : weights
     -   Name                : TES
@@ -88,35 +85,35 @@ Systematics:
               - ttbar
         Up                  :
             -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_TES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
                 Tree              : tree_htautau
                 Weight            : weights
             -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_TES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
                 Tree              : tree_ztautau
                 Weight            : weights
             -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_TES_up.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_up.root
                 Tree              : tree_ttbar
                 Weight            : weights
         Dn                  :
             -   SampleName        : htautau
-                Path              : ./saved_datasets/dataset_TES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
                 Tree              : tree_htautau
                 Weight            : weights
             -   SampleName        : ztautau
-                Path              : ./saved_datasets/dataset_TES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
                 Tree              : tree_ztautau
                 Weight            : weights
             -   SampleName        : ttbar
-                Path              : ./saved_datasets/dataset_TES_dn.root
+                Path              : ${NSBI_DATA_DIR:-./saved_datasets}/dataset_TES_dn.root
                 Tree              : tree_ttbar
                 Weight            : weights
 
 
 Regions:
 -   Name: CR
-    Filter: presel_score<-1.0
+    Filter: presel_score<1.0
     Variable: presel_score
     Type: binned
     Binning:
@@ -124,22 +121,20 @@ Regions:
         - -4.
         - -2.5
         - -1.0
+        - 0.0
+        - 1.0
 -   Name: SR_binned
     Filter: presel_score>4.5
     Variable: presel_score
     Type: binned
     Binning:
         - 4.5
-        - 5.
+        - 7.
 -   Name: SR
-    Filter: presel_score>=-1.0 & presel_score<=3.75
+    Filter: presel_score>=1.0 & presel_score<=4.5
     Variable: presel_score
     Type: binned
     Binning:
-        - -1.0
-        - -0.5
-        - 0.0
-        - 0.5
         - 1.0
         - 1.25
         - 1.5

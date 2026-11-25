@@ -1,403 +1,4 @@
 {
-  "channels": [
-    {
-      "name": "CR",
-      "type": "binned",
-      "samples": [
-        {
-          "name": "ztautau",
-          "data": [
-            512.93359375,
-            55316.40234375,
-            625509.5
-          ],
-          "modifiers": [
-            {
-              "name": "mu_ztautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9936935901641846,
-                  0.9954632520675659,
-                  0.99919593334198
-                ],
-                "lo_data": [
-                  1.009008765220642,
-                  1.0038515329360962,
-                  1.0007826089859009
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9954954981803894,
-                  0.993992805480957,
-                  0.9975639581680298
-                ],
-                "lo_data": [
-                  0.9999997615814209,
-                  1.0057814121246338,
-                  1.0024503469467163
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "ttbar",
-          "data": [
-            13736.21875,
-            16437.61328125,
-            7434.53125
-          ],
-          "modifiers": [
-            {
-              "name": "mu_ttbar",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0007262229919434,
-                  0.9999731183052063,
-                  0.9987116456031799
-                ],
-                "lo_data": [
-                  0.9992038011550903,
-                  1.0000660419464111,
-                  1.0014091730117798
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9993658661842346,
-                  1.0007202625274658,
-                  0.9999033212661743
-                ],
-                "lo_data": [
-                  1.0006754398345947,
-                  0.9993419647216797,
-                  0.9997554421424866
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "htautau",
-          "data": [
-            3.6519131660461426,
-            17.720905303955078,
-            144.5647430419922
-          ],
-          "modifiers": [
-            {
-              "name": "mu_htautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.999984622001648,
-                  0.9994770288467407,
-                  0.9980369806289673
-                ],
-                "lo_data": [
-                  0.9997316002845764,
-                  1.0008984804153442,
-                  1.0017496347427368
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9989607930183411,
-                  0.9982834458351135,
-                  0.9954776167869568
-                ],
-                "lo_data": [
-                  1.0011640787124634,
-                  1.0018463134765625,
-                  1.0042246580123901
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "SR_binned",
-      "type": "binned",
-      "samples": [
-        {
-          "name": "ztautau",
-          "data": [
-            19.40829086303711
-          ],
-          "modifiers": [
-            {
-              "name": "mu_ztautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0
-                ],
-                "lo_data": [
-                  0.952380895614624
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.976190447807312
-                ],
-                "lo_data": [
-                  1.0
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "ttbar",
-          "data": [
-            0.753995954990387
-          ],
-          "modifiers": [
-            {
-              "name": "mu_ttbar",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0
-                ],
-                "lo_data": [
-                  0.9997701048851013
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0
-                ],
-                "lo_data": [
-                  1.0
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "htautau",
-          "data": [
-            2.628404378890991
-          ],
-          "modifiers": [
-            {
-              "name": "mu_htautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0210011005401611
-                ],
-                "lo_data": [
-                  0.9786731600761414
-                ]
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.000173568725586
-                ],
-                "lo_data": [
-                  1.0001771450042725
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "SR",
-      "type": "unbinned",
-      "weights": "./saved_datasets/asimov_weights.npy",
-      "samples": [
-        {
-          "name": "ztautau",
-          "data": [
-            321362.375
-          ],
-          "ratios": "./saved_datasets/output_training_nominal/output_ratios_ztautau/ratio_ztautau.npy",
-          "modifiers": [
-            {
-              "name": "mu_ztautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0023579597473145
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_ztautau_JES_Up/ratio_ztautau.npy",
-                "lo_data": [
-                  0.9978019595146179
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_ztautau_JES_Dn/ratio_ztautau.npy"
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.005796194076538
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_ztautau_TES_Up/ratio_ztautau.npy",
-                "lo_data": [
-                  0.9942212104797363
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_ztautau_TES_Dn/ratio_ztautau.npy"
-              }
-            }
-          ]
-        },
-        {
-          "name": "ttbar",
-          "data": [
-            5392.388671875
-          ],
-          "ratios": "./saved_datasets/output_training_nominal/output_ratios_ttbar/ratio_ttbar.npy",
-          "modifiers": [
-            {
-              "name": "mu_ttbar",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9995803833007812
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_ttbar_JES_Up/ratio_ttbar.npy",
-                "lo_data": [
-                  1.0003118515014648
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_ttbar_JES_Dn/ratio_ttbar.npy"
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  0.9995505809783936
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_ttbar_TES_Up/ratio_ttbar.npy",
-                "lo_data": [
-                  1.0005970001220703
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_ttbar_TES_Dn/ratio_ttbar.npy"
-              }
-            }
-          ]
-        },
-        {
-          "name": "htautau",
-          "data": [
-            841.8275756835938
-          ],
-          "ratios": "./saved_datasets/output_training_nominal/output_ratios_htautau/ratio_htautau.npy",
-          "modifiers": [
-            {
-              "name": "mu_htautau",
-              "data": null,
-              "type": "normfactor"
-            },
-            {
-              "name": "JES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0002100467681885
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_htautau_JES_Up/ratio_htautau.npy",
-                "lo_data": [
-                  0.9998161792755127
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_htautau_JES_Dn/ratio_htautau.npy"
-              }
-            },
-            {
-              "name": "TES",
-              "type": "normplusshape",
-              "data": {
-                "hi_data": [
-                  1.0008152723312378
-                ],
-                "hi_ratio": "./saved_datasets/output_training_systematics/output_ratios_htautau_TES_Up/ratio_htautau.npy",
-                "lo_data": [
-                  0.9992299675941467
-                ],
-                "lo_ratio": "./saved_datasets/output_training_systematics/output_ratios_htautau_TES_Dn/ratio_htautau.npy"
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ],
   "measurements": [
     {
       "name": "higgs_tautau_signal_strength",
@@ -454,6 +55,461 @@
         ],
         "poi": "mu_htautau"
       }
+    }
+  ],
+  "channels": [
+    {
+      "name": "CR",
+      "type": "binned",
+      "samples": [
+        {
+          "name": "ztautau",
+          "data": [
+            475.8724365234375,
+            67731.5234375,
+            605363.5,
+            197165.6875,
+            82408.8125
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ztautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9974300265312195,
+                  0.9957975149154663,
+                  0.9992558360099792,
+                  1.0009963512420654,
+                  1.003555417060852
+                ],
+                "lo_data": [
+                  1.000785231590271,
+                  1.0041897296905518,
+                  1.0007526874542236,
+                  0.9989431500434875,
+                  0.996571958065033
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9970731139183044,
+                  0.9933879375457764,
+                  0.9976658821105957,
+                  1.003135323524475,
+                  1.008086919784546
+                ],
+                "lo_data": [
+                  1.0020703077316284,
+                  1.006546139717102,
+                  1.0023220777511597,
+                  0.9968522787094116,
+                  0.9920578598976135
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ttbar",
+          "data": [
+            14840.728515625,
+            16391.189453125,
+            6656.8984375,
+            2421.65234375,
+            1531.56640625
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ttbar",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0002299547195435,
+                  1.0003459453582764,
+                  0.9989801645278931,
+                  0.9987579584121704,
+                  0.9993394017219543
+                ],
+                "lo_data": [
+                  0.9996141195297241,
+                  0.9997384548187256,
+                  1.0013117790222168,
+                  1.001025915145874,
+                  1.0005967617034912
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9994695782661438,
+                  1.0007703304290771,
+                  0.999905526638031,
+                  0.9992935061454773,
+                  0.9988420605659485
+                ],
+                "lo_data": [
+                  1.000462532043457,
+                  0.99932861328125,
+                  0.9999712705612183,
+                  1.0010113716125488,
+                  1.0010559558868408
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "htautau",
+          "data": [
+            3.7038986682891846,
+            19.008325576782227,
+            135.9803009033203,
+            146.89646911621094,
+            186.1773681640625
+          ],
+          "modifiers": [
+            {
+              "name": "mu_htautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0006961822509766,
+                  0.999441385269165,
+                  0.9982818961143494,
+                  0.9980819821357727,
+                  0.999342679977417
+                ],
+                "lo_data": [
+                  0.9999528527259827,
+                  1.0005335807800293,
+                  1.001810073852539,
+                  1.0017300844192505,
+                  1.000784158706665
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9998111128807068,
+                  0.9987600445747375,
+                  0.9957361221313477,
+                  0.9964803457260132,
+                  0.9980329871177673
+                ],
+                "lo_data": [
+                  1.0006194114685059,
+                  1.0014935731887817,
+                  1.0043892860412598,
+                  1.0033297538757324,
+                  1.0019457340240479
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SR_binned",
+      "type": "binned",
+      "samples": [
+        {
+          "name": "ztautau",
+          "data": [
+            17.663908004760742
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ztautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0173081159591675
+                ],
+                "lo_data": [
+                  0.9749993681907654
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9942306280136108
+                ],
+                "lo_data": [
+                  1.0
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ttbar",
+          "data": [
+            0.5703270435333252
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ttbar",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0357789993286133
+                ],
+                "lo_data": [
+                  1.0001519918441772
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9821109771728516
+                ],
+                "lo_data": [
+                  1.0178898572921753
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "htautau",
+          "data": [
+            3.002671718597412
+          ],
+          "modifiers": [
+            {
+              "name": "mu_htautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0140267610549927
+                ],
+                "lo_data": [
+                  0.9878768920898438
+                ]
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.000530481338501
+                ],
+                "lo_data": [
+                  0.9998995065689087
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SR",
+      "type": "unbinned",
+      "samples": [
+        {
+          "name": "ztautau",
+          "data": [
+            48620.94140625
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ztautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0050442218780518
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ztautau_JES_Up/ratio_ztautau.npy",
+                "lo_data": [
+                  0.994922399520874
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ztautau_JES_Dn/ratio_ztautau.npy"
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0118741989135742
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ztautau_TES_Up/ratio_ztautau.npy",
+                "lo_data": [
+                  0.9881877303123474
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ztautau_TES_Dn/ratio_ztautau.npy"
+              }
+            }
+          ]
+        },
+        {
+          "name": "ttbar",
+          "data": [
+            1132.1104736328125
+          ],
+          "modifiers": [
+            {
+              "name": "mu_ttbar",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.999531090259552
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ttbar_JES_Up/ratio_ttbar.npy",
+                "lo_data": [
+                  1.00031578540802
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ttbar_JES_Dn/ratio_ttbar.npy"
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  0.9997490644454956
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ttbar_TES_Up/ratio_ttbar.npy",
+                "lo_data": [
+                  1.0000901222229004
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_ttbar_TES_Dn/ratio_ttbar.npy"
+              }
+            }
+          ]
+        },
+        {
+          "name": "htautau",
+          "data": [
+            515.31005859375
+          ],
+          "modifiers": [
+            {
+              "name": "mu_htautau",
+              "data": null,
+              "type": "normfactor"
+            },
+            {
+              "name": "JES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0010685920715332
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_htautau_JES_Up/ratio_htautau.npy",
+                "lo_data": [
+                  0.9988918304443359
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_htautau_JES_Dn/ratio_htautau.npy"
+              }
+            },
+            {
+              "name": "TES",
+              "type": "normplusshape",
+              "data": {
+                "hi_data": [
+                  1.0028823614120483
+                ],
+                "hi_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_htautau_TES_Up/ratio_htautau.npy",
+                "lo_data": [
+                  0.997129499912262
+                ],
+                "lo_ratio": "/projects/Physics_Cranmer/saved_datasets/output_training_systematics/output_ratios_htautau_TES_Dn/ratio_htautau.npy"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "name": "CR",
+      "data": [
+        15320.3046875,
+        84141.6796875,
+        612157.5625,
+        199734.0625,
+        84123.875
+      ]
+    },
+    {
+      "name": "SR_binned",
+      "data": [
+        21.231264114379883
+      ]
+    },
+    {
+      "name": "SR",
+      "data": [
+        50268.3515625
+      ],
+      "ratios": {
+        "htautau": "/projects/Physics_Cranmer/saved_datasets/output_training_nominal/output_ratios_htautau/ratio_htautau.npy",
+        "ttbar": "/projects/Physics_Cranmer/saved_datasets/output_training_nominal/output_ratios_ttbar/ratio_ttbar.npy",
+        "ztautau": "/projects/Physics_Cranmer/saved_datasets/output_training_nominal/output_ratios_ztautau/ratio_ztautau.npy"
+      },
+      "weights": "/projects/Physics_Cranmer/saved_datasets/asimov_weights.npy"
     }
   ],
   "version": "1.0.0"

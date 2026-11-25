@@ -2,10 +2,14 @@
 
 import json
 import logging
+import os
 import pathlib
 import pkgutil
+import re
+import warnings
 from typing import Any, Literal, Optional, Union
 
+import jsonschema
 import yaml
 
 
@@ -13,6 +17,70 @@ log = logging.getLogger(__name__)
 
 class ConfigError(Exception):
     """Raised for config load/validate/write errors."""
+
+
+# Matches ``${VAR}`` and ``${VAR:-default}`` inside config strings.
+_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+
+
+def expand_env_vars(obj: Any) -> Any:
+    """Recursively expand ``${VAR}`` / ``${VAR:-default}`` references in every string of a loaded config structure.
+
+    This is what keeps the committed configs portable. Paths are written once with a relative default (e.g. ``${NSBI_DATA_DIR:-./saved_datasets}/dataset_nominal.root``) so a fresh clone runs out of the box, while a cluster run overrides the location by exporting a single environment variable instead of editing every path in the file.
+
+    A ``${VAR}`` with no default that is not set in the environment raises :class:`ConfigError` rather than silently expanding to an empty string, so a typo surfaces as a clear error instead of a mangled path.
+
+    Args:
+        obj (Any): loaded config fragment - dicts, lists and strings are walked, everything else is returned unchanged.
+
+    Returns:
+        Any: the same structure with all environment references expanded.
+    """
+    if isinstance(obj, str):
+
+        def _substitute(match: re.Match) -> str:
+            var_name, default = match.group(1), match.group(2)
+            env_value = os.environ.get(var_name)
+            if env_value is not None:
+                return env_value
+            if default is not None:
+                return default
+            raise ConfigError(
+                f"Config references environment variable '{var_name}', which is not set and has no default. "
+                f"Either export {var_name} or write it as ${{{var_name}:-<default>}}."
+            )
+
+        return _ENV_VAR_PATTERN.sub(_substitute, obj)
+
+    if isinstance(obj, dict):
+        return {key: expand_env_vars(value) for key, value in obj.items()}
+
+    if isinstance(obj, list):
+        return [expand_env_vars(item) for item in obj]
+
+    return obj
+
+
+def load_pipeline_config(path: Union[str, pathlib.Path]) -> dict[str, Any]:
+    """Load a pipeline config (``config.pipeline.yaml``) and expand environment references in it.
+
+    Shared by the example scripts and notebooks so all three entry points (notebooks, scripts, Snakemake) resolve paths identically. For the fit configs (``config_fit_*.yml``) the same expansion happens inside :meth:`ConfigManager.load`.
+
+    Args:
+        path (Union[str, pathlib.Path]): path to the YAML pipeline config.
+
+    Returns:
+        dict[str, Any]: parsed config with ``${VAR}`` / ``${VAR:-default}`` references resolved.
+    """
+    try:
+        with open(path, "r") as config_file:
+            config = yaml.safe_load(config_file)
+    except OSError as e:
+        raise ConfigError(f"Could not read config file at {path}: {e}") from e
+    except yaml.YAMLError as e:
+        raise ConfigError(f"YAML parse error in {path}: {e}") from e
+
+    return expand_env_vars(config)
 
 class ConfigManager:
 
@@ -40,32 +108,32 @@ class ConfigManager:
                                           region_name: str,
                                           sample_name: str) -> Union[int, None]:
 
-        idx = self._index_of_region(channel_name = region_name)
+        idx = self.get_index_unbinned_regions(region_name = region_name)
 
         if idx is None:
-            log.info(f"Region {channel_name} not found in the config.")
+            raise ConfigError(f"Region {region_name} not found in the config.")
 
-        list_dict_trained_models: list[dict[str, Any]] = self.config["Regions"][idx]["TrainedModels"]
+        list_dict_trained_models: list[dict[str, Any]] = self.config["TrainedModels"][idx]["Models"]
         for count, sample_model in enumerate(list_dict_trained_models):
-            if sample_model.get("SampleName") == sample_name:
+            if sample_model.get("Name") == sample_name:
                 return count
         return None
+
+
 
     def get_syst_index_unbinned_regions(self,
                                           region_name: str,
                                           sample_name: str,
                                          syst_name: str) -> Union[int, None]:
 
-        idx = self._index_of_region(channel_name = region_name)
+        idx = self.get_index_unbinned_regions(region_name = region_name)
 
         if idx is None:
-            log.info(f"Region {channel_name} not found in the config.")
-
-        list_dict_trained_models: list[dict[str, Any]] = self.config["Regions"][idx]["TrainedModels"]
+            raise ConfigError(f"Region {region_name} not found in the config.")
 
         idx_sample = self.get_sample_index_unbinned_regions(region_name, sample_name)
 
-        list_dict_systematics: list[dict[str, Any]] = self.config["Regions"][idx]["TrainedModels"][idx_sample]["Systematics"]
+        list_dict_systematics: list[dict[str, Any]] = self.config["TrainedModels"][idx]["Models"][idx_sample]["Systematics"]
         
         for count, syst_model in enumerate(list_dict_systematics):
             if syst_model.get("SystName") == syst_name:
@@ -110,7 +178,7 @@ class ConfigManager:
         existing_idx = self._index_of_region(channel_name)
         new_region = {
             "Name": channel_name,
-            "Filter": preselections,
+            "Filter": filter,
             "Variable": observable,
             "Binning": binning,
         }
@@ -153,7 +221,7 @@ class ConfigManager:
             config = yaml.safe_load(file_path.read_text())
         except Exception as e:
             raise ConfigError(f"YAML parse error: {e}") from e
-        config = yaml.safe_load(file_path.read_text())
+        config = expand_env_vars(config)
         self.validate(config)
         return config
 
@@ -183,15 +251,33 @@ class ConfigManager:
             config (dict[str, Any]): nsbi_common_utils configuration
 
         Raises:
-            NotImplementedError: when more than one data sample is found
-            ValueError: when region / sample / normfactor / systematic names are not unique
+            ConfigError: when the config does not satisfy ``schemas/config.json``, or when region / sample / normfactor / systematic names are not unique
 
         Returns:
             bool: whether the validation was successful
         """
+        # load json schema for config and validate against it
+        schema_text = pkgutil.get_data(__name__, "schemas/config.json")
+        if schema_text is None:
+            raise FileNotFoundError("could not load config schema")
+        config_schema = json.loads(schema_text)
+        errors = sorted(jsonschema.Draft7Validator(config_schema).iter_errors(config), key=lambda e: list(e.absolute_path))
+        if errors:
+            details = "\n  - ".join(f"{'/'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}" for e in errors)
+            raise ConfigError(f"Config does not satisfy the schema {config_schema['$id']}:\n  - {details}")
 
-        # TBA
-        
+        # check that no more than one data sample is present
+        data_samples = [s["Name"] for s in config["Samples"] if s.get("Data", False)]
+        if len(data_samples) > 1:
+            raise ConfigError(f"only one data sample is supported, found {data_samples}")
+
+        # check that names of regions, samples, normfactors and systematics are unique
+        for block in ["Regions", "Samples", "NormFactors", "Systematics"]:
+            names = [entry["Name"] for entry in config.get(block, [])]
+            duplicates = sorted({n for n in names if names.count(n) > 1})
+            if duplicates:
+                raise ConfigError(f"{block} names are not unique: {duplicates}")
+
         # if no issues are found
         return True
 
@@ -205,6 +291,8 @@ class ConfigManager:
         return basis_samples
 
     def get_reference_samples(self):
+        """Deprecated: the reference mixture is defined by ``reference_priors`` in the pipeline config and built by :meth:`nsbi_common_utils.datasets.datasets.prepare_basis_training_dataset`. This reads the old per-sample ``UseAsReference`` flag and will be removed."""
+        warnings.warn("ConfigManager.get_reference_samples and the per-sample UseAsReference flag are deprecated; define the reference with reference_priors instead.", DeprecationWarning, stacklevel=2)
         reference_samples = []
         samples: list[dict[str, Any]] = self.config["Samples"]
         for count, sample in enumerate(samples):
@@ -241,7 +329,7 @@ class ConfigManager:
         idx = self._index_of_region(channel_name = channel_name)
 
         if idx is None:
-            log.info(f"Region {channel_name} not found in the config.")
+            raise ConfigError(f"Region {channel_name} not found in the config.")
 
         filter_string = self.config["Regions"][idx]["Filter"]
 
@@ -249,12 +337,12 @@ class ConfigManager:
     
     def get_channel_asimov_weight_path(self, channel_name: str) -> str:
         
-        idx = self._index_of_region(channel_name = channel_name)
+        idx = self.get_index_unbinned_regions(region_name = channel_name)
 
         if idx is None:
-            log.info(f"Region {channel_name} not found in the config.")
+            raise ConfigError(f"Region {channel_name} not found in the config.")
 
-        asimov_weight_path = self.config["Regions"][idx]["AsimovWeights"]
+        asimov_weight_path = self.config["TrainedModels"][idx]["Weights"]
 
         return asimov_weight_path
 
@@ -265,6 +353,13 @@ class ConfigManager:
                 return count
         return None
 
-    
+    def get_index_unbinned_regions(self, region_name: str) -> Union[int, None]:
+
+        regions: list[dict[str, Any]] = self.config["TrainedModels"]
+        for count, region in enumerate(regions):
+            if region.get("RegionName") == region_name:
+                return count
+
+        return None
 
 

@@ -8,8 +8,8 @@ import pandas as pd
 from utils import _BASIS_COLORS, lagrange_weights
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_bkg", type=int, default=1_000_000)
-parser.add_argument("--n_sig", type=int, default=100_000)
+parser.add_argument("--n_bkg", type=int, default=2_000_000)
+parser.add_argument("--n_sig", type=int, default=1_000_000)
 parser.add_argument("--nodes", type=float, nargs="+", default=[0, 5, 10])
 args = parser.parse_args()
 
